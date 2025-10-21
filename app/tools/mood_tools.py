@@ -203,3 +203,40 @@ def get_mood_description(mood_data: Dict[str, Any]) -> str:
         description += f". Additional descriptors: {tags_str}"
     
     return description
+
+
+def get_user_context(user_id: Optional[str] = None) -> str:
+    """
+    Get user context information (placeholder for future user profile features).
+    
+    Args:
+        user_id: Optional user ID to retrieve context for
+        
+    Returns:
+        JSON string with user context data
+    """
+    # Placeholder implementation - will be enhanced in future phases
+    context = {
+        "user_id": user_id or "anonymous",
+        "preferences": {
+            "favorite_genres": [],
+            "preferred_energy_level": 5,
+            "listening_history": []
+        },
+        "note": "User context feature is a placeholder. Will be implemented in future phases."
+    }
+    
+    return json.dumps(context)
+
+
+# Create user context tool
+user_context_tool = Tool(
+    name="get_user_context",
+    func=get_user_context,
+    description="""
+    Get user context and preferences (placeholder).
+    Input: Optional user_id string
+    Output: JSON with user preferences and listening history.
+    This tool will be enhanced in future phases with actual user data.
+    """
+)

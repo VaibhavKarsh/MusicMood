@@ -1,5 +1,6 @@
 """
-Database utilities package.
+Database module - Compatibility wrapper for app.db.database
+This module provides backward compatibility for imports.
 """
 
 from app.db.database import (
