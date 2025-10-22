@@ -8,9 +8,9 @@ Note: These are approximations and won't be as accurate as real audio features,
 but allow the system to function when the API endpoint is restricted.
 """
 
-import logging
 import hashlib
-from typing import Dict, Any, List
+import logging
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +32,15 @@ def estimate_audio_features(track: Dict[str, Any]) -> Dict[str, float]:
     Returns:
         Dictionary with estimated audio features
     """
-    name = track.get('name', '').lower()
-    artist = track.get('artist', '').lower()
-    popularity = track.get('popularity', 50)
-    duration_ms = track.get('duration_ms', 180000)  # Default 3 minutes
-    explicit = track.get('explicit', False)
+    name = track.get("name", "").lower()
+    artist = track.get("artist", "").lower()
+    popularity = track.get("popularity", 50)
+    duration_ms = track.get("duration_ms", 180000)  # Default 3 minutes
+    explicit = track.get("explicit", False)
 
     # Generate pseudo-random but deterministic values based on track ID
     # This ensures same track always gets same estimates
-    track_id = track.get('id', '')
+    track_id = track.get("id", "")
     seed = int(hashlib.md5(track_id.encode()).hexdigest()[:8], 16) if track_id else 0
 
     # Base values (will be adjusted)
@@ -74,15 +74,69 @@ def estimate_audio_features(track: Dict[str, Any]) -> Dict[str, float]:
         speechiness += 0.05
 
     # Keyword-based adjustments for energy and valence
-    high_energy_keywords = ['energetic', 'party', 'dance', 'pump', 'hype', 'wild', 'crazy',
-                             'rage', 'boom', 'fire', 'beast', 'power', 'hard', 'heavy']
-    low_energy_keywords = ['calm', 'peaceful', 'quiet', 'soft', 'gentle', 'chill', 'relax',
-                            'sleep', 'ambient', 'slow', 'serene', 'tranquil', 'meditation']
+    high_energy_keywords = [
+        "energetic",
+        "party",
+        "dance",
+        "pump",
+        "hype",
+        "wild",
+        "crazy",
+        "rage",
+        "boom",
+        "fire",
+        "beast",
+        "power",
+        "hard",
+        "heavy",
+    ]
+    low_energy_keywords = [
+        "calm",
+        "peaceful",
+        "quiet",
+        "soft",
+        "gentle",
+        "chill",
+        "relax",
+        "sleep",
+        "ambient",
+        "slow",
+        "serene",
+        "tranquil",
+        "meditation",
+    ]
 
-    happy_keywords = ['happy', 'joy', 'celebrate', 'party', 'fun', 'smile', 'love', 'good',
-                       'feel good', 'sunshine', 'bright', 'cheerful', 'upbeat']
-    sad_keywords = ['sad', 'tears', 'cry', 'lonely', 'broken', 'hurt', 'pain', 'goodbye',
-                     'lost', 'dark', 'empty', 'alone', 'blue', 'melancholy']
+    happy_keywords = [
+        "happy",
+        "joy",
+        "celebrate",
+        "party",
+        "fun",
+        "smile",
+        "love",
+        "good",
+        "feel good",
+        "sunshine",
+        "bright",
+        "cheerful",
+        "upbeat",
+    ]
+    sad_keywords = [
+        "sad",
+        "tears",
+        "cry",
+        "lonely",
+        "broken",
+        "hurt",
+        "pain",
+        "goodbye",
+        "lost",
+        "dark",
+        "empty",
+        "alone",
+        "blue",
+        "melancholy",
+    ]
 
     # Check name and artist for keywords
     combined_text = f"{name} {artist}"
@@ -137,14 +191,14 @@ def estimate_audio_features(track: Dict[str, Any]) -> Dict[str, float]:
     loudness = max(-20.0, min(0.0, loudness))
 
     return {
-        'energy': round(energy, 3),
-        'valence': round(valence, 3),
-        'danceability': round(danceability, 3),
-        'tempo': round(tempo, 1),
-        'acousticness': round(acousticness, 3),
-        'instrumentalness': round(instrumentalness, 3),
-        'speechiness': round(speechiness, 3),
-        'loudness': round(loudness, 1),
+        "energy": round(energy, 3),
+        "valence": round(valence, 3),
+        "danceability": round(danceability, 3),
+        "tempo": round(tempo, 1),
+        "acousticness": round(acousticness, 3),
+        "instrumentalness": round(instrumentalness, 3),
+        "speechiness": round(speechiness, 3),
+        "loudness": round(loudness, 1),
     }
 
 
@@ -162,7 +216,7 @@ def enrich_tracks_with_estimated_features(tracks: List[Dict[str, Any]]) -> List[
 
     for track in tracks:
         # Skip if already has audio features
-        if track.get('tempo') is not None and track.get('energy') is not None:
+        if track.get("tempo") is not None and track.get("energy") is not None:
             enriched.append(track)
             continue
 

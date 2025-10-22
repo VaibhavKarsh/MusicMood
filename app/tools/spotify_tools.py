@@ -3,12 +3,14 @@ Spotify Tools for Agent 2 (Music Discovery Agent)
 Provides tools for searching Spotify and analyzing audio features
 """
 
-import logging
 import json
-from typing import Dict, Any, List, Optional
+import logging
+from typing import Any, Dict, List, Optional
+
 from langchain.tools import Tool
-from app.services.spotify import SpotifyClient
+
 from app.config.settings import settings
+from app.services.spotify import SpotifyClient
 
 logger = logging.getLogger(__name__)
 
@@ -20,24 +22,20 @@ MOOD_TO_QUERY_MAP = {
     "energetic": ["workout", "pump up", "high energy", "motivational"],
     "excited": ["party", "celebration", "upbeat", "festive"],
     "euphoric": ["euphoric", "blissful", "ecstatic", "uplifting"],
-
     # Positive, low energy
     "calm": ["peaceful", "relaxing", "chill", "ambient"],
     "peaceful": ["meditation", "zen", "tranquil", "serene"],
     "content": ["easy listening", "mellow", "comfortable", "smooth"],
     "relaxed": ["lounge", "laid back", "easy", "soft"],
-
     # Negative, high energy
     "angry": ["aggressive", "intense", "metal", "hard rock"],
     "anxious": ["tense", "suspenseful", "dramatic", "intense"],
     "frustrated": ["intense", "aggressive", "powerful", "loud"],
-
     # Negative, low energy
     "sad": ["melancholy", "emotional", "heartbreak", "somber"],
     "melancholic": ["sad songs", "emotional", "reflective", "moody"],
     "depressed": ["downtempo", "melancholic", "blue", "somber"],
     "lonely": ["emotional", "introspective", "longing", "heartfelt"],
-
     # Neutral/Complex
     "nostalgic": ["throwback", "classic", "retro", "memories"],
     "romantic": ["love songs", "romantic", "intimate", "passionate"],
@@ -159,10 +157,7 @@ def search_spotify_by_mood(mood_data_json: str) -> str:
             try:
                 # Search for tracks (limit per query)
                 result = spotify_client.search(
-                    query=query,
-                    search_type="track",
-                    limit=20,  # 20 tracks per query
-                    market="US"
+                    query=query, search_type="track", limit=20, market="US"  # 20 tracks per query
                 )
 
                 # Extract tracks
@@ -189,7 +184,11 @@ def search_spotify_by_mood(mood_data_json: str) -> str:
                             "popularity": track.get("popularity", 0),
                             "explicit": track.get("explicit", False),
                             "external_url": track["external_urls"].get("spotify", ""),
-                            "image_url": track["album"]["images"][0]["url"] if track["album"]["images"] else None,
+                            "image_url": (
+                                track["album"]["images"][0]["url"]
+                                if track["album"]["images"]
+                                else None
+                            ),
                         }
 
                         all_tracks.append(track_info)
@@ -218,7 +217,7 @@ def search_spotify_by_mood(mood_data_json: str) -> str:
             "mood_data": mood_data,
             "queries_used": queries,
             "total_tracks": len(final_tracks),
-            "tracks": final_tracks
+            "tracks": final_tracks,
         }
 
         return json.dumps(result, indent=2)
@@ -261,10 +260,7 @@ def get_audio_features_batch(track_ids_json: str) -> str:
         track_ids = json.loads(track_ids_json)
 
         if not isinstance(track_ids, list):
-            return json.dumps({
-                "success": False,
-                "error": "track_ids must be a list"
-            })
+            return json.dumps({"success": False, "error": "track_ids must be a list"})
 
         logger.info(f"Getting audio features for {len(track_ids)} tracks")
 
@@ -284,7 +280,7 @@ def get_audio_features_batch(track_ids_json: str) -> str:
             "success": True,
             "total_tracks": len(track_ids),
             "features_retrieved": len(all_features),
-            "audio_features": all_features
+            "audio_features": all_features,
         }
 
         return json.dumps(result, indent=2)
@@ -321,7 +317,7 @@ def get_mood_filtering_criteria(mood_data: Dict[str, Any]) -> Dict[str, Any]:
         "target_danceability": None,
         "target_tempo": None,
         "target_instrumentalness": None,
-        "tolerance": 0.3
+        "tolerance": 0.3,
     }
 
     # Mood-specific criteria
@@ -370,7 +366,7 @@ def filter_tracks_by_audio_features(
     target_energy: Optional[float] = None,
     target_valence: Optional[float] = None,
     target_danceability: Optional[float] = None,
-    tolerance: float = 0.3
+    tolerance: float = 0.3,
 ) -> str:
     """
     Filter and rank tracks based on audio features matching target values
@@ -407,41 +403,38 @@ def filter_tracks_by_audio_features(
             if target_energy is not None:
                 energy_diff = abs(features.get("energy", 0.5) - target_energy)
                 if energy_diff <= tolerance:
-                    score += (1.0 - energy_diff)
+                    score += 1.0 - energy_diff
                     comparisons += 1
 
             if target_valence is not None:
                 valence_diff = abs(features.get("valence", 0.5) - target_valence)
                 if valence_diff <= tolerance:
-                    score += (1.0 - valence_diff)
+                    score += 1.0 - valence_diff
                     comparisons += 1
 
             if target_danceability is not None:
                 dance_diff = abs(features.get("danceability", 0.5) - target_danceability)
                 if dance_diff <= tolerance:
-                    score += (1.0 - dance_diff)
+                    score += 1.0 - dance_diff
                     comparisons += 1
 
             if comparisons > 0:
                 avg_score = score / comparisons
 
                 # Add track with features and score
-                filtered_tracks.append({
-                    **track,
-                    "audio_features": features,
-                    "match_score": avg_score
-                })
+                filtered_tracks.append(
+                    {**track, "audio_features": features, "match_score": avg_score}
+                )
 
         # Sort by match score
         filtered_tracks.sort(key=lambda x: x["match_score"], reverse=True)
 
         logger.info(f"Filtered to {len(filtered_tracks)} matching tracks")
 
-        return json.dumps({
-            "success": True,
-            "total_matches": len(filtered_tracks),
-            "tracks": filtered_tracks
-        }, indent=2)
+        return json.dumps(
+            {"success": True, "total_matches": len(filtered_tracks), "tracks": filtered_tracks},
+            indent=2,
+        )
 
     except Exception as e:
         error_msg = f"Error filtering tracks: {e}"
@@ -495,23 +488,23 @@ def filter_tracks_by_mood_criteria(tracks_json: str, mood_data_json: str) -> str
             # Calculate basic score (can be enhanced with audio features)
             score = popularity / 100.0  # 0.0-1.0 scale
 
-            filtered_tracks.append({
-                **track,
-                "match_score": score
-            })
+            filtered_tracks.append({**track, "match_score": score})
 
         # Sort by score
         filtered_tracks.sort(key=lambda x: x["match_score"], reverse=True)
 
         logger.info(f"Filtered {len(filtered_tracks)} tracks from {len(tracks)} total")
 
-        return json.dumps({
-            "success": True,
-            "total_input": len(tracks),
-            "total_matches": len(filtered_tracks),
-            "criteria": criteria,
-            "tracks": filtered_tracks
-        }, indent=2)
+        return json.dumps(
+            {
+                "success": True,
+                "total_input": len(tracks),
+                "total_matches": len(filtered_tracks),
+                "criteria": criteria,
+                "tracks": filtered_tracks,
+            },
+            indent=2,
+        )
 
     except Exception as e:
         error_msg = f"Error filtering tracks by mood: {e}"
@@ -536,7 +529,7 @@ search_spotify_tool = Tool(
 
     Example input:
     {"primary_mood": "happy", "energy_level": 8, "context": "workout", "mood_tags": ["motivated"]}
-    """
+    """,
 )
 
 audio_features_tool = Tool(
@@ -551,7 +544,7 @@ audio_features_tool = Tool(
     Example: ["track_id_1", "track_id_2", "track_id_3"]
 
     Output: JSON string with audio features for each track
-    """
+    """,
 )
 
 filter_tracks_tool = Tool(
@@ -565,7 +558,7 @@ filter_tracks_tool = Tool(
     Input: JSON string with tracks and audio features, plus optional targets
 
     Output: JSON string with filtered and ranked tracks by match score
-    """
+    """,
 )
 
 mood_filter_tool = Tool(
@@ -584,5 +577,5 @@ mood_filter_tool = Tool(
     Example:
     tracks_json='[{"id": "abc", "name": "Track", "popularity": 75}]'
     mood_data_json='{"primary_mood": "calm", "energy_level": 3}'
-    """
+    """,
 )

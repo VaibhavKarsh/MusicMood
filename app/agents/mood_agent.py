@@ -4,16 +4,16 @@ Uses LangChain ReAct pattern to analyze user mood and extract structured data.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from langchain.agents import AgentExecutor, create_react_agent
-from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
 from langchain.tools import Tool
+from langchain_ollama import OllamaLLM
 from sqlalchemy.orm import Session
 
 from app.config.settings import settings
-from app.tools.mood_tools import parse_mood_tool, get_mood_description
+from app.tools.mood_tools import get_mood_description, parse_mood_tool
 from app.tools.user_tools import create_get_user_context_tool
 
 logger = logging.getLogger(__name__)
@@ -83,16 +83,12 @@ class MoodUnderstandingAgent:
             input_variables=["input", "agent_scratchpad"],
             partial_variables={
                 "tools": self._format_tools(),
-                "tool_names": ", ".join([tool.name for tool in self.tools])
-            }
+                "tool_names": ", ".join([tool.name for tool in self.tools]),
+            },
         )
 
         # Create agent
-        self.agent = create_react_agent(
-            llm=self.llm,
-            tools=self.tools,
-            prompt=self.prompt
-        )
+        self.agent = create_react_agent(llm=self.llm, tools=self.tools, prompt=self.prompt)
 
         # Create executor
         self.agent_executor = AgentExecutor(
@@ -101,7 +97,7 @@ class MoodUnderstandingAgent:
             verbose=settings.AGENT_VERBOSE,
             max_iterations=settings.AGENT_MAX_ITERATIONS,
             handle_parsing_errors=True,
-            return_intermediate_steps=True
+            return_intermediate_steps=True,
         )
 
         logger.info(f"Mood Understanding Agent initialized with {len(self.tools)} tools")
@@ -125,11 +121,7 @@ class MoodUnderstandingAgent:
             tool_strings.append(f"- {tool.name}: {tool.description}")
         return "\n".join(tool_strings)
 
-    def analyze_mood(
-        self,
-        mood_text: str,
-        user_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    def analyze_mood(self, mood_text: str, user_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Analyze user mood and return structured data.
 
@@ -155,6 +147,7 @@ class MoodUnderstandingAgent:
 
             # Extract mood data from final answer
             import json
+
             mood_data = json.loads(result["output"])
 
             # Add agent metadata
@@ -162,7 +155,7 @@ class MoodUnderstandingAgent:
                 "mood_data": mood_data,
                 "agent_steps": len(result.get("intermediate_steps", [])),
                 "reasoning": self._extract_reasoning(result),
-                "success": True
+                "success": True,
             }
 
             logger.info(f"Mood analysis complete: {mood_data.get('primary_mood')}")
@@ -173,20 +166,23 @@ class MoodUnderstandingAgent:
 
             # Return fallback
             import json
-            fallback_mood = json.dumps({
-                "primary_mood": "calm",
-                "energy_level": 5,
-                "emotional_intensity": 5,
-                "context": "general",
-                "mood_tags": ["neutral"]
-            })
+
+            fallback_mood = json.dumps(
+                {
+                    "primary_mood": "calm",
+                    "energy_level": 5,
+                    "emotional_intensity": 5,
+                    "context": "general",
+                    "mood_tags": ["neutral"],
+                }
+            )
 
             return {
                 "mood_data": json.loads(fallback_mood),
                 "agent_steps": 0,
                 "reasoning": f"Error: {str(e)}",
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
     def _extract_reasoning(self, result: Dict) -> str:

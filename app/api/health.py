@@ -3,7 +3,8 @@ Health check router for monitoring service status
 """
 
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
 import httpx
 import redis
 from fastapi import APIRouter, Depends
@@ -25,27 +26,28 @@ async def check_database(db: Session) -> Dict[str, Any]:
 
         # Get version
         version_result = db.execute(text("SELECT version()"))
-        version = version_result.fetchone()[0].split(',')[0]
+        version = version_result.fetchone()[0].split(",")[0]
 
         # Count tables
-        tables_result = db.execute(text("""
+        tables_result = db.execute(
+            text(
+                """
             SELECT COUNT(*)
             FROM information_schema.tables
             WHERE table_schema = 'public'
-        """))
+        """
+            )
+        )
         table_count = tables_result.fetchone()[0]
 
         return {
             "status": "healthy",
             "version": version,
             "tables": table_count,
-            "response_time_ms": 0  # Could add timing
+            "response_time_ms": 0,  # Could add timing
         }
     except Exception as e:
-        return {
-            "status": "unhealthy",
-            "error": str(e)
-        }
+        return {"status": "unhealthy", "error": str(e)}
 
 
 async def check_redis() -> Dict[str, Any]:
@@ -54,7 +56,7 @@ async def check_redis() -> Dict[str, Any]:
         r = redis.from_url(
             settings.REDIS_URL,
             decode_responses=settings.REDIS_DECODE_RESPONSES,
-            max_connections=settings.REDIS_MAX_CONNECTIONS
+            max_connections=settings.REDIS_MAX_CONNECTIONS,
         )
 
         # Test connection
@@ -65,16 +67,13 @@ async def check_redis() -> Dict[str, Any]:
 
         return {
             "status": "healthy",
-            "version": info.get('redis_version', 'unknown'),
-            "connected_clients": info.get('connected_clients', 0),
-            "used_memory_human": info.get('used_memory_human', 'unknown'),
-            "uptime_seconds": info.get('uptime_in_seconds', 0)
+            "version": info.get("redis_version", "unknown"),
+            "connected_clients": info.get("connected_clients", 0),
+            "used_memory_human": info.get("used_memory_human", "unknown"),
+            "uptime_seconds": info.get("uptime_in_seconds", 0),
         }
     except Exception as e:
-        return {
-            "status": "unhealthy",
-            "error": str(e)
-        }
+        return {"status": "unhealthy", "error": str(e)}
 
 
 async def check_ollama() -> Dict[str, Any]:
@@ -85,13 +84,12 @@ async def check_ollama() -> Dict[str, Any]:
             response = await client.get(f"{settings.OLLAMA_BASE_URL}/api/tags")
 
             if response.status_code == 200:
-                models = response.json().get('models', [])
-                model_names = [m['name'] for m in models]
+                models = response.json().get("models", [])
+                model_names = [m["name"] for m in models]
 
                 # Check if configured model is available
                 configured_model_available = any(
-                    settings.OLLAMA_MODEL in name
-                    for name in model_names
+                    settings.OLLAMA_MODEL in name for name in model_names
                 )
 
                 return {
@@ -99,18 +97,12 @@ async def check_ollama() -> Dict[str, Any]:
                     "available_models": len(models),
                     "configured_model": settings.OLLAMA_MODEL,
                     "model_available": configured_model_available,
-                    "all_models": model_names[:5]  # First 5 models
+                    "all_models": model_names[:5],  # First 5 models
                 }
             else:
-                return {
-                    "status": "unhealthy",
-                    "error": f"HTTP {response.status_code}"
-                }
+                return {"status": "unhealthy", "error": f"HTTP {response.status_code}"}
     except Exception as e:
-        return {
-            "status": "unhealthy",
-            "error": str(e)
-        }
+        return {"status": "unhealthy", "error": str(e)}
 
 
 @router.get("/health")
@@ -135,9 +127,9 @@ async def health_check(db: Session = Depends(get_db)) -> Dict[str, Any]:
 
     # Determine overall health
     all_healthy = (
-        db_health["status"] == "healthy" and
-        redis_health["status"] == "healthy" and
-        ollama_health["status"] == "healthy"
+        db_health["status"] == "healthy"
+        and redis_health["status"] == "healthy"
+        and ollama_health["status"] == "healthy"
     )
 
     return {
@@ -146,14 +138,11 @@ async def health_check(db: Session = Depends(get_db)) -> Dict[str, Any]:
         "environment": settings.ENVIRONMENT,
         "version": settings.APP_VERSION,
         "services": {
-            "api": {
-                "status": "healthy",
-                "uptime": "N/A"  # Could add actual uptime tracking
-            },
+            "api": {"status": "healthy", "uptime": "N/A"},  # Could add actual uptime tracking
             "database": db_health,
             "redis": redis_health,
-            "ollama": ollama_health
-        }
+            "ollama": ollama_health,
+        },
     }
 
 
@@ -163,10 +152,7 @@ async def liveness_check() -> Dict[str, str]:
     Kubernetes liveness probe endpoint.
     Returns 200 if the service is running.
     """
-    return {
-        "status": "alive",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
 
 
 @router.get("/health/ready")
@@ -184,5 +170,5 @@ async def readiness_check(db: Session = Depends(get_db)) -> Dict[str, Any]:
     return {
         "status": "ready" if ready else "not_ready",
         "timestamp": datetime.utcnow().isoformat(),
-        "database": db_health["status"]
+        "database": db_health["status"],
     }

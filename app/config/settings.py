@@ -2,8 +2,10 @@
 Environment Configuration Settings
 Centralizes all environment-based configuration using Pydantic Settings
 """
+
 import logging
 from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -53,7 +55,11 @@ class Settings(BaseSettings):
 
     # API Settings
     API_V1_PREFIX: str = "/api"
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8501", "http://localhost:8000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:8501",
+        "http://localhost:8000",
+    ]
 
     # Cache TTL Settings (in seconds)
     MOOD_CACHE_TTL: int = 1800  # 30 minutes
@@ -70,10 +76,7 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
 

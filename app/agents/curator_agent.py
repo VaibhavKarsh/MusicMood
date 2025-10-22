@@ -7,19 +7,19 @@ This agent uses the ReAct pattern to curate personalized playlists by:
 3. Generating explanations for the curation
 """
 
-import logging
-from typing import Dict, Any, Optional, List
 import json
+import logging
+from typing import Any, Dict, List, Optional
 
-from langchain.agents import create_react_agent, AgentExecutor
+from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import PromptTemplate
 from langchain_community.llms import Ollama
 
 from app.config.settings import settings
 from app.tools.curator_tools import (
-    rank_tracks_tool,
+    generate_explanation_tool,
     optimize_diversity_tool,
-    generate_explanation_tool
+    rank_tracks_tool,
 )
 
 logger = logging.getLogger(__name__)
@@ -89,25 +89,17 @@ class PlaylistCuratorAgent:
             self.llm = Ollama(
                 model=settings.OLLAMA_MODEL,
                 base_url=settings.OLLAMA_BASE_URL,
-                temperature=0.3  # Lower temperature for more consistent curation
+                temperature=0.3,  # Lower temperature for more consistent curation
             )
 
             # Define tools
-            self.tools = [
-                rank_tracks_tool,
-                optimize_diversity_tool,
-                generate_explanation_tool
-            ]
+            self.tools = [rank_tracks_tool, optimize_diversity_tool, generate_explanation_tool]
 
             # Create prompt template
             self.prompt = PromptTemplate.from_template(CURATOR_AGENT_PROMPT)
 
             # Create agent
-            self.agent = create_react_agent(
-                llm=self.llm,
-                tools=self.tools,
-                prompt=self.prompt
-            )
+            self.agent = create_react_agent(llm=self.llm, tools=self.tools, prompt=self.prompt)
 
             # Create executor
             self.executor = AgentExecutor(
@@ -116,7 +108,7 @@ class PlaylistCuratorAgent:
                 verbose=True,
                 max_iterations=5,  # Allow up to 5 iterations
                 handle_parsing_errors=True,
-                return_intermediate_steps=True
+                return_intermediate_steps=True,
             )
 
             logger.info("Playlist Curator Agent initialized with 3 tools")
@@ -130,7 +122,7 @@ class PlaylistCuratorAgent:
         candidate_tracks: List[Dict[str, Any]],
         mood_data: Dict[str, Any],
         user_context: Optional[Dict[str, Any]] = None,
-        desired_count: int = 30
+        desired_count: int = 30,
     ) -> Dict[str, Any]:
         """
         Curate a personalized playlist from candidate tracks.
@@ -149,17 +141,20 @@ class PlaylistCuratorAgent:
             - execution_time: Time taken to curate
         """
         import time
+
         start_time = time.time()
 
         try:
-            logger.info(f"Curating playlist from {len(candidate_tracks)} candidates for mood: {mood_data.get('primary_mood')}")
+            logger.info(
+                f"Curating playlist from {len(candidate_tracks)} candidates for mood: {mood_data.get('primary_mood')}"
+            )
 
             # Prepare input for agent
             input_data = {
                 "candidate_tracks": candidate_tracks,
                 "mood_data": mood_data,
                 "user_context": user_context or {},
-                "desired_count": desired_count
+                "desired_count": desired_count,
             }
 
             # Create agent input question
@@ -189,16 +184,16 @@ Do NOT skip any steps. Use ALL tools."""
             execution_time = time.time() - start_time
 
             # Extract results
-            final_answer = result.get('output', '')
-            intermediate_steps = result.get('intermediate_steps', [])
+            final_answer = result.get("output", "")
+            intermediate_steps = result.get("intermediate_steps", [])
 
             logger.info(f"Agent completed curation in {execution_time:.2f}s")
             logger.info(f"Agent took {len(intermediate_steps)} steps")
 
             # Parse final answer to extract playlist and explanation
             parsed_result = self._parse_agent_output(final_answer, intermediate_steps)
-            parsed_result['execution_time'] = round(execution_time, 2)
-            parsed_result['curation_strategy'] = self._extract_strategy(intermediate_steps)
+            parsed_result["execution_time"] = round(execution_time, 2)
+            parsed_result["curation_strategy"] = self._extract_strategy(intermediate_steps)
 
             logger.info(f"Curated playlist with {len(parsed_result.get('playlist', []))} tracks")
 
@@ -212,13 +207,11 @@ Do NOT skip any steps. Use ALL tools."""
                 "error": str(e),
                 "execution_time": round(execution_time, 2),
                 "playlist": [],
-                "explanation": "Failed to curate playlist due to an error."
+                "explanation": "Failed to curate playlist due to an error.",
             }
 
     def _parse_agent_output(
-        self,
-        final_answer: str,
-        intermediate_steps: List[tuple]
+        self, final_answer: str, intermediate_steps: List[tuple]
     ) -> Dict[str, Any]:
         """
         Parse agent output to extract playlist and explanation.
@@ -227,7 +220,7 @@ Do NOT skip any steps. Use ALL tools."""
             "playlist": [],
             "explanation": "",
             "diversity_metrics": {},
-            "intermediate_steps_count": len(intermediate_steps)
+            "intermediate_steps_count": len(intermediate_steps),
         }
 
         try:
@@ -240,8 +233,8 @@ Do NOT skip any steps. Use ALL tools."""
                     # Extract playlist from diversity optimization
                     try:
                         diversity_result = json.loads(observation)
-                        result['playlist'] = diversity_result.get('playlist', [])
-                        result['diversity_metrics'] = diversity_result.get('diversity_metrics', {})
+                        result["playlist"] = diversity_result.get("playlist", [])
+                        result["diversity_metrics"] = diversity_result.get("diversity_metrics", {})
                     except:
                         pass
 
@@ -249,13 +242,13 @@ Do NOT skip any steps. Use ALL tools."""
                     # Extract explanation
                     try:
                         explanation_result = json.loads(observation)
-                        result['explanation'] = explanation_result.get('explanation', '')
+                        result["explanation"] = explanation_result.get("explanation", "")
                     except:
                         pass
 
             # If no explanation in steps, use final answer
-            if not result['explanation']:
-                result['explanation'] = final_answer
+            if not result["explanation"]:
+                result["explanation"] = final_answer
 
             logger.info(f"Parsed {len(result['playlist'])} tracks and explanation")
 
@@ -268,15 +261,12 @@ Do NOT skip any steps. Use ALL tools."""
         """
         Extract curation strategy from intermediate steps.
         """
-        strategy = {
-            "tools_used": [],
-            "reasoning_steps": []
-        }
+        strategy = {"tools_used": [], "reasoning_steps": []}
 
         for step in intermediate_steps:
             action, observation = step
-            strategy['tools_used'].append(action.tool)
-            strategy['reasoning_steps'].append(action.log)
+            strategy["tools_used"].append(action.tool)
+            strategy["reasoning_steps"].append(action.log)
 
         return strategy
 

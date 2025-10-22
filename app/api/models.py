@@ -2,13 +2,14 @@
 Pydantic models for API request/response validation
 """
 
-from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field, field_validator
+from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel, Field, field_validator
 
 # ============================================================================
 # REQUEST MODELS
 # ============================================================================
+
 
 class GeneratePlaylistRequest(BaseModel):
     """Request model for generating a playlist"""
@@ -18,23 +19,18 @@ class GeneratePlaylistRequest(BaseModel):
         description="Natural language mood description",
         min_length=1,
         max_length=500,
-        examples=["I'm feeling happy and energetic today!", "Need focus music for work"]
+        examples=["I'm feeling happy and energetic today!", "Need focus music for work"],
     )
 
     user_id: Optional[str] = Field(
-        default="anonymous",
-        description="User ID for personalization (optional)",
-        max_length=100
+        default="anonymous", description="User ID for personalization (optional)", max_length=100
     )
 
     desired_count: int = Field(
-        default=30,
-        description="Number of tracks in final playlist",
-        ge=5,
-        le=50
+        default=30, description="Number of tracks in final playlist", ge=5, le=50
     )
 
-    @field_validator('user_input')
+    @field_validator("user_input")
     @classmethod
     def validate_user_input(cls, v: str) -> str:
         """Validate user input is not empty or whitespace"""
@@ -49,14 +45,21 @@ class FeedbackRequest(BaseModel):
     playlist_id: str = Field(..., description="ID of the playlist")
     user_id: str = Field(..., description="ID of the user providing feedback")
     rating: int = Field(..., description="Rating 1-5", ge=1, le=5)
-    feedback_text: Optional[str] = Field(None, description="Optional text feedback", max_length=1000)
-    liked_tracks: Optional[List[str]] = Field(default=[], description="List of track IDs user liked")
-    disliked_tracks: Optional[List[str]] = Field(default=[], description="List of track IDs user disliked")
+    feedback_text: Optional[str] = Field(
+        None, description="Optional text feedback", max_length=1000
+    )
+    liked_tracks: Optional[List[str]] = Field(
+        default=[], description="List of track IDs user liked"
+    )
+    disliked_tracks: Optional[List[str]] = Field(
+        default=[], description="List of track IDs user disliked"
+    )
 
 
 # ============================================================================
 # RESPONSE MODELS
 # ============================================================================
+
 
 class TrackMetadata(BaseModel):
     """Track metadata model"""

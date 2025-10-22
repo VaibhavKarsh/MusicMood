@@ -2,6 +2,7 @@
 MusicMood FastAPI Application
 Main application entry point with middleware and route configuration
 """
+
 import logging
 from contextlib import asynccontextmanager
 
@@ -13,10 +14,7 @@ from fastapi.responses import JSONResponse
 from app.config.settings import settings
 
 # Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
-    format=settings.LOG_FORMAT
-)
+logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL), format=settings.LOG_FORMAT)
 logger = logging.getLogger(__name__)
 
 
@@ -35,6 +33,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize database
     from app.db import init_db
+
     await init_db()
     logger.info("Database initialized")
 
@@ -46,6 +45,7 @@ async def lifespan(app: FastAPI):
 
     # Close database connections
     from app.db import close_db
+
     await close_db()
     logger.info("Database connections closed")
 
@@ -106,8 +106,8 @@ async def global_exception_handler(request, exc):
         status_code=500,
         content={
             "error": "Internal server error",
-            "detail": str(exc) if settings.DEBUG else "An unexpected error occurred"
-        }
+            "detail": str(exc) if settings.DEBUG else "An unexpected error occurred",
+        },
     )
 
 
@@ -136,10 +136,11 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=settings.DEBUG,
-        log_level=settings.LOG_LEVEL.lower()
+        log_level=settings.LOG_LEVEL.lower(),
     )

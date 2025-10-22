@@ -5,10 +5,12 @@ This module provides tools for track ranking, diversity optimization,
 and explanation generation for playlist curation.
 """
 
-import logging
-from typing import List, Dict, Any, Optional
 import json
+import logging
+from typing import Any, Dict, List, Optional
+
 from langchain.tools import Tool
+
 from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -50,25 +52,33 @@ def rank_tracks_by_relevance(input_str: str) -> str:
                 return json.dumps({"error": "Invalid input format"})
 
         # Extract parameters
-        tracks_json = input_data.get('tracks_json', input_data.get('ranked_tracks_json', '[]'))
-        mood_data_json = input_data.get('mood_data_json', '{}')
-        user_context_json = input_data.get('user_context_json', '{}')
+        tracks_json = input_data.get("tracks_json", input_data.get("ranked_tracks_json", "[]"))
+        mood_data_json = input_data.get("mood_data_json", "{}")
+        user_context_json = input_data.get("user_context_json", "{}")
 
         # Parse JSON strings
         tracks = json.loads(tracks_json) if isinstance(tracks_json, str) else tracks_json
-        mood_data = json.loads(mood_data_json) if isinstance(mood_data_json, str) else mood_data_json
-        user_context = json.loads(user_context_json) if isinstance(user_context_json, str) else user_context_json
+        mood_data = (
+            json.loads(mood_data_json) if isinstance(mood_data_json, str) else mood_data_json
+        )
+        user_context = (
+            json.loads(user_context_json)
+            if isinstance(user_context_json, str)
+            else user_context_json
+        )
 
-        logger.info(f"Ranking {len(tracks)} tracks for mood: {mood_data.get('primary_mood', 'unknown')}")
+        logger.info(
+            f"Ranking {len(tracks)} tracks for mood: {mood_data.get('primary_mood', 'unknown')}"
+        )
 
         # Extract mood requirements
-        primary_mood = mood_data.get('primary_mood', 'neutral')
-        energy_level = mood_data.get('energy_level', 5)
-        mood_tags = mood_data.get('mood_tags', [])
+        primary_mood = mood_data.get("primary_mood", "neutral")
+        energy_level = mood_data.get("energy_level", 5)
+        mood_tags = mood_data.get("mood_tags", [])
 
         # Get user preferences
-        favorite_artists = user_context.get('favorite_artists', [])
-        favorite_genres = user_context.get('favorite_genres', [])
+        favorite_artists = user_context.get("favorite_artists", [])
+        favorite_genres = user_context.get("favorite_genres", [])
 
         ranked_tracks = []
 
@@ -81,29 +91,31 @@ def rank_tracks_by_relevance(input_str: str) -> str:
 
             # Weighted sum
             total_score = (
-                audio_score * 0.40 +
-                preference_score * 0.30 +
-                popularity_score * 0.20 +
-                novelty_score * 0.10
+                audio_score * 0.40
+                + preference_score * 0.30
+                + popularity_score * 0.20
+                + novelty_score * 0.10
             )
 
             # Add score to track
             track_with_score = track.copy()
-            track_with_score['relevance_score'] = round(total_score, 2)
-            track_with_score['score_breakdown'] = {
-                'audio_match': round(audio_score, 2),
-                'user_preference': round(preference_score, 2),
-                'popularity': round(popularity_score, 2),
-                'novelty': round(novelty_score, 2)
+            track_with_score["relevance_score"] = round(total_score, 2)
+            track_with_score["score_breakdown"] = {
+                "audio_match": round(audio_score, 2),
+                "user_preference": round(preference_score, 2),
+                "popularity": round(popularity_score, 2),
+                "novelty": round(novelty_score, 2),
             }
 
             ranked_tracks.append(track_with_score)
 
         # Sort by relevance score (descending)
-        ranked_tracks.sort(key=lambda x: x['relevance_score'], reverse=True)
+        ranked_tracks.sort(key=lambda x: x["relevance_score"], reverse=True)
 
-        logger.info(f"Ranked tracks - Top score: {ranked_tracks[0]['relevance_score']:.2f}, "
-                   f"Bottom score: {ranked_tracks[-1]['relevance_score']:.2f}")
+        logger.info(
+            f"Ranked tracks - Top score: {ranked_tracks[0]['relevance_score']:.2f}, "
+            f"Bottom score: {ranked_tracks[-1]['relevance_score']:.2f}"
+        )
         logger.info(f"Top 5 tracks: {[t['name'] for t in ranked_tracks[:5]]}")
 
         return json.dumps(ranked_tracks, indent=2)
@@ -121,34 +133,34 @@ def _calculate_audio_feature_score(track: Dict[str, Any], mood_data: Dict[str, A
     """
     try:
         # Get mood requirements
-        primary_mood = mood_data.get('primary_mood', 'neutral')
-        energy_level = mood_data.get('energy_level', 5) / 10.0  # Normalize to 0-1
+        primary_mood = mood_data.get("primary_mood", "neutral")
+        energy_level = mood_data.get("energy_level", 5) / 10.0  # Normalize to 0-1
 
         # Define mood-to-feature mappings
         mood_requirements = {
-            'happy': {'energy': 0.7, 'valence': 0.8, 'tempo': 120},
-            'excited': {'energy': 0.9, 'valence': 0.8, 'tempo': 130},
-            'energetic': {'energy': 0.9, 'valence': 0.7, 'tempo': 130},
-            'calm': {'energy': 0.3, 'valence': 0.5, 'tempo': 80},
-            'relaxed': {'energy': 0.3, 'valence': 0.6, 'tempo': 75},
-            'focused': {'energy': 0.5, 'valence': 0.5, 'tempo': 100},
-            'sad': {'energy': 0.3, 'valence': 0.2, 'tempo': 70},
-            'melancholy': {'energy': 0.3, 'valence': 0.3, 'tempo': 75},
-            'angry': {'energy': 0.9, 'valence': 0.3, 'tempo': 140},
-            'neutral': {'energy': 0.5, 'valence': 0.5, 'tempo': 100}
+            "happy": {"energy": 0.7, "valence": 0.8, "tempo": 120},
+            "excited": {"energy": 0.9, "valence": 0.8, "tempo": 130},
+            "energetic": {"energy": 0.9, "valence": 0.7, "tempo": 130},
+            "calm": {"energy": 0.3, "valence": 0.5, "tempo": 80},
+            "relaxed": {"energy": 0.3, "valence": 0.6, "tempo": 75},
+            "focused": {"energy": 0.5, "valence": 0.5, "tempo": 100},
+            "sad": {"energy": 0.3, "valence": 0.2, "tempo": 70},
+            "melancholy": {"energy": 0.3, "valence": 0.3, "tempo": 75},
+            "angry": {"energy": 0.9, "valence": 0.3, "tempo": 140},
+            "neutral": {"energy": 0.5, "valence": 0.5, "tempo": 100},
         }
 
-        target_features = mood_requirements.get(primary_mood.lower(), mood_requirements['neutral'])
+        target_features = mood_requirements.get(primary_mood.lower(), mood_requirements["neutral"])
 
         # Get track features (with defaults for missing data)
-        track_energy = track.get('energy', 0.5)
-        track_valence = track.get('valence', 0.5)
-        track_tempo = track.get('tempo', 100)
+        track_energy = track.get("energy", 0.5)
+        track_valence = track.get("valence", 0.5)
+        track_tempo = track.get("tempo", 100)
 
         # Calculate distance for each feature (lower = better match)
-        energy_distance = abs(track_energy - target_features['energy'])
-        valence_distance = abs(track_valence - target_features['valence'])
-        tempo_distance = abs(track_tempo - target_features['tempo']) / 200.0  # Normalize tempo
+        energy_distance = abs(track_energy - target_features["energy"])
+        valence_distance = abs(track_valence - target_features["valence"])
+        tempo_distance = abs(track_tempo - target_features["tempo"]) / 200.0  # Normalize tempo
 
         # Convert distance to similarity score (0-100)
         # Perfect match = 0 distance = 100 score
@@ -176,18 +188,18 @@ def _calculate_preference_score(track: Dict[str, Any], user_context: Dict[str, A
         score = 50.0  # Base score
 
         # Check favorite artists
-        favorite_artists = user_context.get('favorite_artists', [])
-        track_artists = track.get('artists', [])
+        favorite_artists = user_context.get("favorite_artists", [])
+        track_artists = track.get("artists", [])
 
         if favorite_artists and track_artists:
             for artist in track_artists:
-                if artist.get('name', '').lower() in [fa.lower() for fa in favorite_artists]:
+                if artist.get("name", "").lower() in [fa.lower() for fa in favorite_artists]:
                     score += 30  # Big bonus for favorite artist
                     break
 
         # Check favorite genres
-        favorite_genres = user_context.get('favorite_genres', [])
-        track_genres = track.get('genres', [])
+        favorite_genres = user_context.get("favorite_genres", [])
+        track_genres = track.get("genres", [])
 
         if favorite_genres and track_genres:
             for genre in track_genres:
@@ -211,7 +223,7 @@ def _calculate_popularity_score(track: Dict[str, Any]) -> float:
     """
     try:
         # Spotify popularity is 0-100
-        popularity = track.get('popularity', 50)
+        popularity = track.get("popularity", 50)
 
         # Slightly favor popular tracks but not too heavily
         # Sweet spot is 60-80 popularity
@@ -241,13 +253,13 @@ def _calculate_novelty_score(track: Dict[str, Any], user_context: Dict[str, Any]
         score = 70.0  # Base score
 
         # Check if artist is new to user
-        recent_artists = user_context.get('recent_artists', [])
-        track_artists = track.get('artists', [])
+        recent_artists = user_context.get("recent_artists", [])
+        track_artists = track.get("artists", [])
 
         if track_artists and recent_artists:
             is_new_artist = True
             for artist in track_artists:
-                if artist.get('name', '').lower() in [ra.lower() for ra in recent_artists]:
+                if artist.get("name", "").lower() in [ra.lower() for ra in recent_artists]:
                     is_new_artist = False
                     break
 
@@ -275,7 +287,7 @@ rank_tracks_tool = Tool(
     Returns: JSON string of tracks sorted by relevance score (0-100).
     Each track includes relevance_score and score_breakdown.
 
-    Use this tool FIRST to identify the most relevant tracks for the mood."""
+    Use this tool FIRST to identify the most relevant tracks for the mood.""",
 )
 
 
@@ -309,8 +321,8 @@ def optimize_diversity(input_str: str) -> str:
                 input_data = {"ranked_tracks_json": input_str, "desired_count": 30}
 
         # Extract parameters
-        ranked_tracks_json = input_data.get('ranked_tracks_json', '[]')
-        desired_count = input_data.get('desired_count', 30)
+        ranked_tracks_json = input_data.get("ranked_tracks_json", "[]")
+        desired_count = input_data.get("desired_count", 30)
 
         # Ensure desired_count is an integer
         if isinstance(desired_count, str):
@@ -342,14 +354,16 @@ def optimize_diversity(input_str: str) -> str:
         diversity_metrics = _calculate_diversity_metrics(optimized_playlist)
 
         logger.info(f"Optimized playlist: {len(optimized_playlist)} tracks")
-        logger.info(f"Diversity metrics: {diversity_metrics['unique_artists']} unique artists, "
-                   f"tempo std={diversity_metrics['tempo_std']:.1f}, "
-                   f"energy std={diversity_metrics['energy_std']:.3f}")
+        logger.info(
+            f"Diversity metrics: {diversity_metrics['unique_artists']} unique artists, "
+            f"tempo std={diversity_metrics['tempo_std']:.1f}, "
+            f"energy std={diversity_metrics['energy_std']:.3f}"
+        )
 
         result = {
             "playlist": optimized_playlist,
             "diversity_metrics": diversity_metrics,
-            "track_count": len(optimized_playlist)
+            "track_count": len(optimized_playlist),
         }
 
         return json.dumps(result, indent=2)
@@ -359,7 +373,9 @@ def optimize_diversity(input_str: str) -> str:
         return json.dumps({"error": str(e)})
 
 
-def _apply_diversity_constraints(tracks: List[Dict[str, Any]], desired_count: int) -> List[Dict[str, Any]]:
+def _apply_diversity_constraints(
+    tracks: List[Dict[str, Any]], desired_count: int
+) -> List[Dict[str, Any]]:
     """
     Select tracks while respecting diversity constraints.
 
@@ -369,22 +385,18 @@ def _apply_diversity_constraints(tracks: List[Dict[str, Any]], desired_count: in
     """
     selected = []
     artist_count = {}
-    tempo_ranges = {
-        'slow': 0,      # <90 BPM
-        'medium': 0,    # 90-120 BPM
-        'fast': 0       # >120 BPM
-    }
+    tempo_ranges = {"slow": 0, "medium": 0, "fast": 0}  # <90 BPM  # 90-120 BPM  # >120 BPM
 
     for track in tracks:
         if len(selected) >= desired_count:
             break
 
         # Check artist constraint
-        artists = track.get('artists', [])
+        artists = track.get("artists", [])
         if artists:
             # Handle both dict format (e.g. {'name': 'Artist'}) and string format (e.g. 'Artist')
             if isinstance(artists[0], dict):
-                artist_name = artists[0].get('name', 'Unknown')
+                artist_name = artists[0].get("name", "Unknown")
             else:
                 artist_name = str(artists[0])
 
@@ -399,13 +411,13 @@ def _apply_diversity_constraints(tracks: List[Dict[str, Any]], desired_count: in
             artist_count[artist_name] = artist_count_current + 1
 
             # Update tempo distribution
-            tempo = track.get('tempo', 100)
+            tempo = track.get("tempo", 100)
             if tempo < 90:
-                tempo_ranges['slow'] += 1
+                tempo_ranges["slow"] += 1
             elif tempo <= 120:
-                tempo_ranges['medium'] += 1
+                tempo_ranges["medium"] += 1
             else:
-                tempo_ranges['fast'] += 1
+                tempo_ranges["fast"] += 1
         else:
             # No artist info, just add it
             selected.append(track)
@@ -424,8 +436,10 @@ def _apply_diversity_constraints(tracks: List[Dict[str, Any]], desired_count: in
 
     logger.info(f"Selected {len(selected)} tracks with diversity constraints")
     logger.info(f"Artist constraint: Max 2 per artist applied")
-    logger.info(f"Tempo distribution: Slow={tempo_ranges['slow']}, "
-               f"Medium={tempo_ranges['medium']}, Fast={tempo_ranges['fast']}")
+    logger.info(
+        f"Tempo distribution: Slow={tempo_ranges['slow']}, "
+        f"Medium={tempo_ranges['medium']}, Fast={tempo_ranges['fast']}"
+    )
 
     return selected
 
@@ -444,7 +458,7 @@ def _optimize_energy_flow(tracks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         return tracks
 
     # Sort by energy for easier arrangement
-    tracks_by_energy = sorted(tracks, key=lambda t: t.get('energy', 0.5))
+    tracks_by_energy = sorted(tracks, key=lambda t: t.get("energy", 0.5))
 
     # Create energy curve
     optimized = []
@@ -455,15 +469,15 @@ def _optimize_energy_flow(tracks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     remaining = [t for i, t in enumerate(tracks_by_energy) if i != start_idx]
 
     # Alternate between slightly higher and lower energy
-    current_energy = optimized[0].get('energy', 0.5)
+    current_energy = optimized[0].get("energy", 0.5)
 
     while remaining and len(optimized) < len(tracks):
         # Find track with energy close to current (within 0.15)
         best_track = None
-        best_distance = float('inf')
+        best_distance = float("inf")
 
         for track in remaining:
-            track_energy = track.get('energy', 0.5)
+            track_energy = track.get("energy", 0.5)
             distance = abs(track_energy - current_energy)
 
             if distance < best_distance:
@@ -473,11 +487,11 @@ def _optimize_energy_flow(tracks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if best_track:
             optimized.append(best_track)
             remaining.remove(best_track)
-            current_energy = best_track.get('energy', 0.5)
+            current_energy = best_track.get("energy", 0.5)
         else:
             # Fallback: just add first remaining
             optimized.append(remaining[0])
-            current_energy = remaining[0].get('energy', 0.5)
+            current_energy = remaining[0].get("energy", 0.5)
             remaining.pop(0)
 
     logger.info(f"Optimized energy flow for {len(optimized)} tracks")
@@ -490,35 +504,30 @@ def _calculate_diversity_metrics(playlist: List[Dict[str, Any]]) -> Dict[str, An
     Calculate diversity metrics for the playlist.
     """
     if not playlist:
-        return {
-            "unique_artists": 0,
-            "tempo_std": 0,
-            "energy_std": 0,
-            "diversity_score": 0
-        }
+        return {"unique_artists": 0, "tempo_std": 0, "energy_std": 0, "diversity_score": 0}
 
     # Count unique artists
     unique_artists = set()
     for track in playlist:
-        artists = track.get('artists', [])
+        artists = track.get("artists", [])
         if artists:
             # Handle both dict format and string format
             if isinstance(artists[0], dict):
-                unique_artists.add(artists[0].get('name', 'Unknown'))
+                unique_artists.add(artists[0].get("name", "Unknown"))
             else:
                 unique_artists.add(str(artists[0]))
 
     # Calculate tempo statistics
-    tempos = [track.get('tempo', 100) for track in playlist]
+    tempos = [track.get("tempo", 100) for track in playlist]
     tempo_mean = sum(tempos) / len(tempos)
     tempo_variance = sum((t - tempo_mean) ** 2 for t in tempos) / len(tempos)
-    tempo_std = tempo_variance ** 0.5
+    tempo_std = tempo_variance**0.5
 
     # Calculate energy statistics
-    energies = [track.get('energy', 0.5) for track in playlist]
+    energies = [track.get("energy", 0.5) for track in playlist]
     energy_mean = sum(energies) / len(energies)
     energy_variance = sum((e - energy_mean) ** 2 for e in energies) / len(energies)
-    energy_std = energy_variance ** 0.5
+    energy_std = energy_variance**0.5
 
     # Calculate overall diversity score (0-100)
     # Based on: unique artists (40%), tempo variety (30%), energy variety (30%)
@@ -526,11 +535,7 @@ def _calculate_diversity_metrics(playlist: List[Dict[str, Any]]) -> Dict[str, An
     tempo_score = min(100, tempo_std * 3)  # Good diversity = >20 BPM std
     energy_score = min(100, energy_std * 300)  # Good diversity = >0.15 std
 
-    diversity_score = (
-        artist_score * 0.40 +
-        tempo_score * 0.30 +
-        energy_score * 0.30
-    )
+    diversity_score = artist_score * 0.40 + tempo_score * 0.30 + energy_score * 0.30
 
     return {
         "unique_artists": len(unique_artists),
@@ -538,7 +543,7 @@ def _calculate_diversity_metrics(playlist: List[Dict[str, Any]]) -> Dict[str, An
         "tempo_std": round(tempo_std, 1),
         "energy_mean": round(energy_mean, 3),
         "energy_std": round(energy_std, 3),
-        "diversity_score": round(diversity_score, 2)
+        "diversity_score": round(diversity_score, 2),
     }
 
 
@@ -560,7 +565,7 @@ optimize_diversity_tool = Tool(
 
     Returns: JSON with optimized playlist and diversity metrics.
 
-    Use this tool SECOND after ranking to build the final diverse playlist."""
+    Use this tool SECOND after ranking to build the final diverse playlist.""",
 )
 
 
@@ -592,37 +597,37 @@ def generate_explanation(input_str: str) -> str:
                 return json.dumps({"error": "Invalid input format"})
 
         # Extract parameters
-        playlist_json = input_data.get('playlist_json', '{}')
-        mood_data_json = input_data.get('mood_data_json', '{}')
+        playlist_json = input_data.get("playlist_json", "{}")
+        mood_data_json = input_data.get("mood_data_json", "{}")
 
         # Parse inputs
-        playlist_data = json.loads(playlist_json) if isinstance(playlist_json, str) else playlist_json
+        playlist_data = (
+            json.loads(playlist_json) if isinstance(playlist_json, str) else playlist_json
+        )
 
         # Handle both direct playlist and wrapped format
-        if isinstance(playlist_data, dict) and 'playlist' in playlist_data:
-            playlist = playlist_data['playlist']
-            diversity_metrics = playlist_data.get('diversity_metrics', {})
+        if isinstance(playlist_data, dict) and "playlist" in playlist_data:
+            playlist = playlist_data["playlist"]
+            diversity_metrics = playlist_data.get("diversity_metrics", {})
         else:
             playlist = playlist_data
             diversity_metrics = _calculate_diversity_metrics(playlist)
 
-        mood_data = json.loads(mood_data_json) if isinstance(mood_data_json, str) else mood_data_json
+        mood_data = (
+            json.loads(mood_data_json) if isinstance(mood_data_json, str) else mood_data_json
+        )
 
         # Analyze playlist characteristics
         characteristics = _analyze_playlist_characteristics(playlist, diversity_metrics)
 
         # Generate explanation using template
-        explanation = _generate_explanation_from_template(
-            mood_data,
-            characteristics
-        )
+        explanation = _generate_explanation_from_template(mood_data, characteristics)
 
         logger.info(f"Generated explanation: {explanation[:100]}...")
 
-        return json.dumps({
-            "explanation": explanation,
-            "characteristics": characteristics
-        }, indent=2)
+        return json.dumps(
+            {"explanation": explanation, "characteristics": characteristics}, indent=2
+        )
 
     except Exception as e:
         logger.error(f"Error generating explanation: {e}")
@@ -630,8 +635,7 @@ def generate_explanation(input_str: str) -> str:
 
 
 def _analyze_playlist_characteristics(
-    playlist: List[Dict[str, Any]],
-    diversity_metrics: Dict[str, Any]
+    playlist: List[Dict[str, Any]], diversity_metrics: Dict[str, Any]
 ) -> Dict[str, Any]:
     """
     Analyze key characteristics of the playlist.
@@ -640,25 +644,25 @@ def _analyze_playlist_characteristics(
         return {}
 
     # Calculate average energy
-    energies = [track.get('energy', 0.5) for track in playlist]
+    energies = [track.get("energy", 0.5) for track in playlist]
     avg_energy = sum(energies) / len(energies)
 
     # Calculate average tempo
-    tempos = [track.get('tempo', 100) for track in playlist]
+    tempos = [track.get("tempo", 100) for track in playlist]
     avg_tempo = sum(tempos) / len(tempos)
 
     # Calculate average valence
-    valences = [track.get('valence', 0.5) for track in playlist]
+    valences = [track.get("valence", 0.5) for track in playlist]
     avg_valence = sum(valences) / len(valences)
 
     # Get top artists
     artist_counts = {}
     for track in playlist:
-        artists = track.get('artists', [])
+        artists = track.get("artists", [])
         if artists:
             # Handle both dict format and string format
             if isinstance(artists[0], dict):
-                artist_name = artists[0].get('name', 'Unknown')
+                artist_name = artists[0].get("name", "Unknown")
             else:
                 artist_name = str(artists[0])
             artist_counts[artist_name] = artist_counts.get(artist_name, 0) + 1
@@ -696,66 +700,57 @@ def _analyze_playlist_characteristics(
         "energy_desc": energy_desc,
         "tempo_desc": tempo_desc,
         "mood_desc": mood_desc,
-        "unique_artists": diversity_metrics.get('unique_artists', len(artist_counts)),
+        "unique_artists": diversity_metrics.get("unique_artists", len(artist_counts)),
         "top_artists": [artist for artist, _ in top_artists],
-        "track_count": len(playlist)
+        "track_count": len(playlist),
     }
 
 
 def _generate_explanation_from_template(
-    mood_data: Dict[str, Any],
-    characteristics: Dict[str, Any]
+    mood_data: Dict[str, Any], characteristics: Dict[str, Any]
 ) -> str:
     """
     Generate explanation using mood-specific templates.
     """
-    primary_mood = mood_data.get('primary_mood', 'neutral').lower()
-    energy_level = mood_data.get('energy_level', 5)
+    primary_mood = mood_data.get("primary_mood", "neutral").lower()
+    energy_level = mood_data.get("energy_level", 5)
 
     # Get characteristics
-    energy_desc = characteristics.get('energy_desc', 'moderate-energy')
-    tempo_desc = characteristics.get('tempo_desc', 'mid-tempo')
-    mood_desc = characteristics.get('mood_desc', 'balanced')
-    unique_artists = characteristics.get('unique_artists', 0)
-    track_count = characteristics.get('track_count', 0)
-    avg_tempo = characteristics.get('avg_tempo', 100)
+    energy_desc = characteristics.get("energy_desc", "moderate-energy")
+    tempo_desc = characteristics.get("tempo_desc", "mid-tempo")
+    mood_desc = characteristics.get("mood_desc", "balanced")
+    unique_artists = characteristics.get("unique_artists", 0)
+    track_count = characteristics.get("track_count", 0)
+    avg_tempo = characteristics.get("avg_tempo", 100)
 
     # Mood-specific templates
     templates = {
-        'happy': f"I've curated {track_count} {energy_desc} tracks with {tempo_desc} rhythms to match your happy mood. "
-                 f"This playlist features {unique_artists} diverse artists with {mood_desc} vibes, "
-                 f"averaging {int(avg_tempo)} BPM to keep your positive energy flowing.",
-
-        'excited': f"This {track_count}-track playlist brings the excitement with {energy_desc}, {tempo_desc} beats! "
-                  f"Featuring {unique_artists} different artists, these {mood_desc} tracks "
-                  f"will fuel your enthusiasm and keep the energy high.",
-
-        'energetic': f"I've assembled {track_count} {energy_desc} tracks perfect for your energetic mood. "
-                    f"With {unique_artists} diverse artists and an average tempo of {int(avg_tempo)} BPM, "
-                    f"this playlist will power you through any activity.",
-
-        'calm': f"This {track_count}-track collection offers {energy_desc}, {tempo_desc} music to help you relax. "
-               f"Featuring {unique_artists} artists, these {mood_desc} tracks average {int(avg_tempo)} BPM, "
-               f"creating the perfect peaceful atmosphere.",
-
-        'relaxed': f"I've selected {track_count} {energy_desc} tracks from {unique_artists} artists to enhance your relaxation. "
-                  f"These {tempo_desc}, {mood_desc} songs create a soothing flow perfect for unwinding.",
-
-        'focused': f"This {track_count}-track playlist is designed to enhance concentration with {energy_desc}, {tempo_desc} music. "
-                  f"Featuring {unique_artists} diverse artists, these {mood_desc} tracks maintain a steady {int(avg_tempo)} BPM "
-                  f"to help you stay in the zone.",
-
-        'sad': f"I've curated {track_count} {energy_desc} tracks to honor your current mood. "
-              f"With {unique_artists} thoughtful artists, these {mood_desc} songs provide comfort "
-              f"while allowing you to process your emotions.",
-
-        'melancholy': f"This {track_count}-track collection embraces melancholy with {energy_desc}, {tempo_desc} selections. "
-                     f"Featuring {unique_artists} artists, these {mood_desc} tracks offer cathartic beauty "
-                     f"at a reflective {int(avg_tempo)} BPM.",
-
-        'angry': f"I've assembled {track_count} {energy_desc} tracks to channel your intensity. "
-                f"These {tempo_desc} songs from {unique_artists} artists deliver {mood_desc} power, "
-                f"averaging {int(avg_tempo)} BPM to match your fierce energy.",
+        "happy": f"I've curated {track_count} {energy_desc} tracks with {tempo_desc} rhythms to match your happy mood. "
+        f"This playlist features {unique_artists} diverse artists with {mood_desc} vibes, "
+        f"averaging {int(avg_tempo)} BPM to keep your positive energy flowing.",
+        "excited": f"This {track_count}-track playlist brings the excitement with {energy_desc}, {tempo_desc} beats! "
+        f"Featuring {unique_artists} different artists, these {mood_desc} tracks "
+        f"will fuel your enthusiasm and keep the energy high.",
+        "energetic": f"I've assembled {track_count} {energy_desc} tracks perfect for your energetic mood. "
+        f"With {unique_artists} diverse artists and an average tempo of {int(avg_tempo)} BPM, "
+        f"this playlist will power you through any activity.",
+        "calm": f"This {track_count}-track collection offers {energy_desc}, {tempo_desc} music to help you relax. "
+        f"Featuring {unique_artists} artists, these {mood_desc} tracks average {int(avg_tempo)} BPM, "
+        f"creating the perfect peaceful atmosphere.",
+        "relaxed": f"I've selected {track_count} {energy_desc} tracks from {unique_artists} artists to enhance your relaxation. "
+        f"These {tempo_desc}, {mood_desc} songs create a soothing flow perfect for unwinding.",
+        "focused": f"This {track_count}-track playlist is designed to enhance concentration with {energy_desc}, {tempo_desc} music. "
+        f"Featuring {unique_artists} diverse artists, these {mood_desc} tracks maintain a steady {int(avg_tempo)} BPM "
+        f"to help you stay in the zone.",
+        "sad": f"I've curated {track_count} {energy_desc} tracks to honor your current mood. "
+        f"With {unique_artists} thoughtful artists, these {mood_desc} songs provide comfort "
+        f"while allowing you to process your emotions.",
+        "melancholy": f"This {track_count}-track collection embraces melancholy with {energy_desc}, {tempo_desc} selections. "
+        f"Featuring {unique_artists} artists, these {mood_desc} tracks offer cathartic beauty "
+        f"at a reflective {int(avg_tempo)} BPM.",
+        "angry": f"I've assembled {track_count} {energy_desc} tracks to channel your intensity. "
+        f"These {tempo_desc} songs from {unique_artists} artists deliver {mood_desc} power, "
+        f"averaging {int(avg_tempo)} BPM to match your fierce energy.",
     }
 
     # Get template for mood (or use neutral default)
@@ -763,9 +758,11 @@ def _generate_explanation_from_template(
 
     if not explanation:
         # Default template
-        explanation = (f"I've curated {track_count} tracks featuring {unique_artists} diverse artists "
-                      f"to match your {primary_mood} mood. These {energy_desc}, {tempo_desc} selections "
-                      f"create a {mood_desc} atmosphere perfect for your current state.")
+        explanation = (
+            f"I've curated {track_count} tracks featuring {unique_artists} diverse artists "
+            f"to match your {primary_mood} mood. These {energy_desc}, {tempo_desc} selections "
+            f"create a {mood_desc} atmosphere perfect for your current state."
+        )
 
     return explanation
 
@@ -788,5 +785,5 @@ generate_explanation_tool = Tool(
     Returns: JSON with concise 2-3 sentence explanation of why these tracks
     match the user's mood and what makes the playlist special.
 
-    Use this tool LAST to explain your curation choices to the user."""
+    Use this tool LAST to explain your curation choices to the user.""",
 )

@@ -5,10 +5,10 @@ Uses LLM to parse and structure user mood input.
 
 import json
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from langchain_ollama import OllamaLLM
 from langchain.tools import Tool
+from langchain_ollama import OllamaLLM
 
 from app.config.settings import settings
 
@@ -85,8 +85,8 @@ Return only the JSON object, nothing else."""
         response = response.strip()
 
         # Find JSON object in response
-        start_idx = response.find('{')
-        end_idx = response.rfind('}') + 1
+        start_idx = response.find("{")
+        end_idx = response.rfind("}") + 1
 
         if start_idx != -1 and end_idx > start_idx:
             json_str = response[start_idx:end_idx]
@@ -95,19 +95,27 @@ Return only the JSON object, nothing else."""
             parsed = json.loads(json_str)
 
             # Validate structure
-            required_fields = ['primary_mood', 'energy_level', 'emotional_intensity', 'context', 'mood_tags']
+            required_fields = [
+                "primary_mood",
+                "energy_level",
+                "emotional_intensity",
+                "context",
+                "mood_tags",
+            ]
             for field in required_fields:
                 if field not in parsed:
                     raise ValueError(f"Missing required field: {field}")
 
             # Validate ranges
-            if not (1 <= parsed['energy_level'] <= 10):
-                parsed['energy_level'] = max(1, min(10, parsed['energy_level']))
+            if not (1 <= parsed["energy_level"] <= 10):
+                parsed["energy_level"] = max(1, min(10, parsed["energy_level"]))
 
-            if not (1 <= parsed['emotional_intensity'] <= 10):
-                parsed['emotional_intensity'] = max(1, min(10, parsed['emotional_intensity']))
+            if not (1 <= parsed["emotional_intensity"] <= 10):
+                parsed["emotional_intensity"] = max(1, min(10, parsed["emotional_intensity"]))
 
-            logger.info(f"Successfully parsed mood: {parsed['primary_mood']}, energy: {parsed['energy_level']}")
+            logger.info(
+                f"Successfully parsed mood: {parsed['primary_mood']}, energy: {parsed['energy_level']}"
+            )
             return json.dumps(parsed)
 
         else:
@@ -124,7 +132,7 @@ Return only the JSON object, nothing else."""
             "emotional_intensity": 5,
             "context": "general",
             "mood_tags": ["neutral"],
-            "error": "Failed to parse mood, using fallback"
+            "error": "Failed to parse mood, using fallback",
         }
         return json.dumps(fallback)
 
@@ -138,7 +146,7 @@ Return only the JSON object, nothing else."""
             "emotional_intensity": 5,
             "context": "general",
             "mood_tags": ["neutral"],
-            "error": str(e)
+            "error": str(e),
         }
         return json.dumps(fallback)
 
@@ -152,7 +160,7 @@ parse_mood_tool = Tool(
     Input: A text description of how the user is feeling.
     Output: JSON with primary_mood, energy_level (1-10), emotional_intensity (1-10), context, and mood_tags.
     Use this tool when you need to understand and structure the user's emotional state from their text input.
-    """
+    """,
 )
 
 
@@ -167,11 +175,11 @@ def get_mood_description(mood_data: Dict[str, Any]) -> str:
         Natural language description of the mood
     """
 
-    primary_mood = mood_data.get('primary_mood', 'neutral')
-    energy_level = mood_data.get('energy_level', 5)
-    emotional_intensity = mood_data.get('emotional_intensity', 5)
-    context = mood_data.get('context', 'general')
-    mood_tags = mood_data.get('mood_tags', [])
+    primary_mood = mood_data.get("primary_mood", "neutral")
+    energy_level = mood_data.get("energy_level", 5)
+    emotional_intensity = mood_data.get("emotional_intensity", 5)
+    context = mood_data.get("context", "general")
+    mood_tags = mood_data.get("mood_tags", [])
 
     # Energy descriptors
     if energy_level >= 8:
@@ -221,9 +229,9 @@ def get_user_context(user_id: Optional[str] = None) -> str:
         "preferences": {
             "favorite_genres": [],
             "preferred_energy_level": 5,
-            "listening_history": []
+            "listening_history": [],
         },
-        "note": "User context feature is a placeholder. Will be implemented in future phases."
+        "note": "User context feature is a placeholder. Will be implemented in future phases.",
     }
 
     return json.dumps(context)
@@ -238,5 +246,5 @@ user_context_tool = Tool(
     Input: Optional user_id string
     Output: JSON with user preferences and listening history.
     This tool will be enhanced in future phases with actual user data.
-    """
+    """,
 )

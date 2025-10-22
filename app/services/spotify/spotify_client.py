@@ -3,11 +3,13 @@ Spotify API Client
 Handles authentication, rate limiting, and API interactions with Spotify
 """
 
-import time
 import logging
-from typing import Optional, Dict, Any, List
+import time
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import httpx
+
 from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -33,7 +35,7 @@ class SpotifyClient:
         self,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
-        timeout: int = 30
+        timeout: int = 30,
     ):
         """
         Initialize Spotify client (lazy loading - no API calls on init)
@@ -75,9 +77,10 @@ class SpotifyClient:
             Base64 encoded 'client_id:client_secret'
         """
         import base64
+
         auth_str = f"{self.client_id}:{self.client_secret}"
-        auth_bytes = auth_str.encode('utf-8')
-        auth_b64 = base64.b64encode(auth_bytes).decode('utf-8')
+        auth_bytes = auth_str.encode("utf-8")
+        auth_b64 = base64.b64encode(auth_bytes).decode("utf-8")
         return f"Basic {auth_b64}"
 
     def _is_token_expired(self) -> bool:
@@ -112,9 +115,9 @@ class SpotifyClient:
                 self.TOKEN_URL,
                 headers={
                     "Authorization": self._get_auth_header(),
-                    "Content-Type": "application/x-www-form-urlencoded"
+                    "Content-Type": "application/x-www-form-urlencoded",
                 },
-                data={"grant_type": "client_credentials"}
+                data={"grant_type": "client_credentials"},
             )
             response.raise_for_status()
 
@@ -164,7 +167,7 @@ class SpotifyClient:
         endpoint: str,
         params: Optional[Dict[str, Any]] = None,
         json_data: Optional[Dict[str, Any]] = None,
-        max_retries: int = 3
+        max_retries: int = 3,
     ) -> Dict[str, Any]:
         """
         Make authenticated request to Spotify API with retry logic
@@ -186,10 +189,7 @@ class SpotifyClient:
         token = self.get_access_token()
         url = f"{self.API_BASE_URL}{endpoint}"
 
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
         retry_count = 0
         backoff_seconds = 1
@@ -199,11 +199,7 @@ class SpotifyClient:
                 logger.debug(f"{method} {endpoint} (attempt {retry_count + 1}/{max_retries + 1})")
 
                 response = self.http_client.request(
-                    method=method,
-                    url=url,
-                    headers=headers,
-                    params=params,
-                    json=json_data
+                    method=method, url=url, headers=headers, params=params, json=json_data
                 )
 
                 # Update rate limit info
@@ -234,13 +230,17 @@ class SpotifyClient:
                 elif 500 <= response.status_code < 600:
                     # Server error - retry with exponential backoff
                     if retry_count < max_retries:
-                        logger.warning(f"Server error {response.status_code}, retrying in {backoff_seconds}s")
+                        logger.warning(
+                            f"Server error {response.status_code}, retrying in {backoff_seconds}s"
+                        )
                         time.sleep(backoff_seconds)
                         backoff_seconds *= 2  # Exponential backoff
                         retry_count += 1
                         continue
                     else:
-                        raise Exception(f"Server error after {max_retries} retries: {response.status_code}")
+                        raise Exception(
+                            f"Server error after {max_retries} retries: {response.status_code}"
+                        )
 
                 elif response.status_code == 404:
                     logger.error(f"Resource not found: {endpoint}")
@@ -254,7 +254,9 @@ class SpotifyClient:
                 else:
                     # Other errors
                     logger.error(f"Unexpected status code: {response.status_code}")
-                    raise Exception(f"Unexpected status code: {response.status_code} - {response.text}")
+                    raise Exception(
+                        f"Unexpected status code: {response.status_code} - {response.text}"
+                    )
 
             except httpx.TimeoutException:
                 if retry_count < max_retries:
@@ -279,11 +281,7 @@ class SpotifyClient:
     # ==================== API Methods ====================
 
     def search(
-        self,
-        query: str,
-        search_type: str = "track",
-        limit: int = 50,
-        market: str = "US"
+        self, query: str, search_type: str = "track", limit: int = 50, market: str = "US"
     ) -> Dict[str, Any]:
         """
         Search Spotify catalog
@@ -301,7 +299,7 @@ class SpotifyClient:
             "q": query,
             "type": search_type,
             "limit": min(limit, 50),  # Spotify max is 50
-            "market": market
+            "market": market,
         }
 
         logger.info(f"Searching Spotify: '{query}' (type={search_type}, limit={limit})")
@@ -332,10 +330,7 @@ class SpotifyClient:
         Returns:
             Tracks dictionary with 'tracks' array
         """
-        params = {
-            "ids": ",".join(track_ids[:50]),  # Max 50
-            "market": market
-        }
+        params = {"ids": ",".join(track_ids[:50]), "market": market}  # Max 50
         return self._make_request("GET", "/tracks", params=params)
 
     def get_audio_features(self, track_ids: List[str]) -> Dict[str, Any]:
@@ -361,7 +356,7 @@ class SpotifyClient:
         target_energy: Optional[float] = None,
         target_danceability: Optional[float] = None,
         target_tempo: Optional[int] = None,
-        market: str = "US"
+        market: str = "US",
     ) -> Dict[str, Any]:
         """
         Get track recommendations based on seeds and target audio features
@@ -380,10 +375,7 @@ class SpotifyClient:
         Returns:
             Recommendations dictionary with 'tracks' array
         """
-        params = {
-            "limit": min(limit, 100),
-            "market": market
-        }
+        params = {"limit": min(limit, 100), "market": market}
 
         # Add seeds (max 5 total)
         if seed_tracks:
@@ -468,7 +460,7 @@ class SpotifyClient:
 
         # Process in batches of 100
         for i in range(0, len(track_ids), batch_size):
-            batch = track_ids[i:i + batch_size]
+            batch = track_ids[i : i + batch_size]
             batch_num = (i // batch_size) + 1
             total_batches = (len(track_ids) + batch_size - 1) // batch_size
 
@@ -486,11 +478,15 @@ class SpotifyClient:
                     if features and features.get("id"):
                         track_id = features["id"]
                         all_features[track_id] = features
-                        logger.debug(f"Got features for track {track_id}: energy={features.get('energy')}, valence={features.get('valence')}")
+                        logger.debug(
+                            f"Got features for track {track_id}: energy={features.get('energy')}, valence={features.get('valence')}"
+                        )
                     else:
                         logger.warning("Received null audio features in batch response")
 
-                logger.info(f"Batch {batch_num}: Retrieved features for {len(audio_features_list)} tracks")
+                logger.info(
+                    f"Batch {batch_num}: Retrieved features for {len(audio_features_list)} tracks"
+                )
 
             except Exception as e:
                 logger.error(f"Failed to get audio features for batch {batch_num}: {e}")
@@ -524,8 +520,12 @@ class SpotifyClient:
         """
         return {
             "authenticated": self._access_token is not None,
-            "token_expires_at": self._token_expires_at.isoformat() if self._token_expires_at else None,
+            "token_expires_at": (
+                self._token_expires_at.isoformat() if self._token_expires_at else None
+            ),
             "token_expired": self._is_token_expired(),
             "rate_limit_remaining": self._rate_limit_remaining,
-            "rate_limit_reset_at": self._rate_limit_reset_at.isoformat() if self._rate_limit_reset_at else None
+            "rate_limit_reset_at": (
+                self._rate_limit_reset_at.isoformat() if self._rate_limit_reset_at else None
+            ),
         }

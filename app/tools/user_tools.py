@@ -2,15 +2,15 @@
 User context tools for retrieving user preferences and history.
 """
 
-import logging
-from typing import Dict, Any, Optional
 import json
+import logging
+from typing import Any, Dict, Optional
 
-from sqlalchemy.orm import Session
-from sqlalchemy import desc
 from langchain.tools import Tool
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
 
-from app.models import User, MoodEntry, PlaylistRecommendation
+from app.models import MoodEntry, PlaylistRecommendation, User
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +41,9 @@ def get_user_context(user_id: str, db: Session) -> str:
 
         if not user:
             logger.warning(f"User {user_id_int} not found")
-            return json.dumps({
-                "user_exists": False,
-                "message": "User not found, using default preferences"
-            })
+            return json.dumps(
+                {"user_exists": False, "message": "User not found, using default preferences"}
+            )
 
         # Get recent mood entries (last 10)
         recent_moods = (
@@ -68,12 +67,14 @@ def get_user_context(user_id: str, db: Session) -> str:
         mood_history = []
         mood_counts = {}
         for mood in recent_moods:
-            mood_history.append({
-                "emotion": mood.detected_emotion,
-                "confidence": mood.confidence_score,
-                "time_of_day": mood.time_of_day,
-                "date": mood.created_at.isoformat()
-            })
+            mood_history.append(
+                {
+                    "emotion": mood.detected_emotion,
+                    "confidence": mood.confidence_score,
+                    "time_of_day": mood.time_of_day,
+                    "date": mood.created_at.isoformat(),
+                }
+            )
             mood_counts[mood.detected_emotion] = mood_counts.get(mood.detected_emotion, 0) + 1
 
         # Find most common mood
@@ -87,12 +88,18 @@ def get_user_context(user_id: str, db: Session) -> str:
         for playlist in recent_playlists:
             if playlist.feedback_score:
                 feedback_scores.append(playlist.feedback_score)
-                playlist_feedback.append({
-                    "name": playlist.playlist_name,
-                    "mood": playlist.mood_entry.detected_emotion if playlist.mood_entry else "unknown",
-                    "feedback": playlist.feedback_score,
-                    "listened": playlist.was_listened
-                })
+                playlist_feedback.append(
+                    {
+                        "name": playlist.playlist_name,
+                        "mood": (
+                            playlist.mood_entry.detected_emotion
+                            if playlist.mood_entry
+                            else "unknown"
+                        ),
+                        "feedback": playlist.feedback_score,
+                        "listened": playlist.was_listened,
+                    }
+                )
 
         if feedback_scores:
             avg_feedback = sum(feedback_scores) / len(feedback_scores)
@@ -105,28 +112,27 @@ def get_user_context(user_id: str, db: Session) -> str:
             "mood_history": {
                 "total_entries": len(recent_moods),
                 "most_common_mood": most_common_mood,
-                "recent_moods": mood_history[:5]  # Last 5 moods
+                "recent_moods": mood_history[:5],  # Last 5 moods
             },
             "playlist_preferences": {
                 "total_playlists": len(recent_playlists),
                 "average_feedback": round(avg_feedback, 2) if avg_feedback else None,
-                "recent_feedback": playlist_feedback[:3]  # Last 3 with feedback
+                "recent_feedback": playlist_feedback[:3],  # Last 3 with feedback
             },
             "preferences": {
                 "typical_mood": most_common_mood,
-                "engagement_level": "high" if len(recent_moods) > 5 else "low"
-            }
+                "engagement_level": "high" if len(recent_moods) > 5 else "low",
+            },
         }
 
-        logger.info(f"Retrieved context for user {user_id_int}: {most_common_mood} mood, {len(recent_moods)} entries")
+        logger.info(
+            f"Retrieved context for user {user_id_int}: {most_common_mood} mood, {len(recent_moods)} entries"
+        )
         return json.dumps(context)
 
     except Exception as e:
         logger.error(f"Error retrieving user context: {e}")
-        return json.dumps({
-            "error": str(e),
-            "user_exists": False
-        })
+        return json.dumps({"error": str(e), "user_exists": False})
 
 
 def create_get_user_context_tool(db: Session) -> Tool:
@@ -151,5 +157,5 @@ def create_get_user_context_tool(db: Session) -> Tool:
         Input: User ID as a string.
         Output: JSON with user's mood patterns, common moods, playlist feedback, and preferences.
         Use this tool to understand the user's historical preferences and patterns before making recommendations.
-        """
+        """,
     )

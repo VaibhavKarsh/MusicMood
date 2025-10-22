@@ -2,15 +2,14 @@
 Database connection and session management utilities.
 """
 
-from typing import Generator
 from contextlib import contextmanager
+from typing import Generator
 
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 
 from app.config.settings import settings
-
 
 # Create database engine with connection pooling
 engine = create_engine(

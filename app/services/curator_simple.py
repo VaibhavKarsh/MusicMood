@@ -4,15 +4,15 @@ Simplified Playlist Curator - Direct tool execution without ReAct agent complexi
 This provides a reliable curation pipeline by calling tools directly in sequence.
 """
 
-import logging
-from typing import Dict, Any, Optional, List
 import json
+import logging
 import time
+from typing import Any, Dict, List, Optional
 
 from app.tools.curator_tools import (
-    rank_tracks_by_relevance,
+    generate_explanation,
     optimize_diversity,
-    generate_explanation
+    rank_tracks_by_relevance,
 )
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def curate_playlist_simple(
     candidate_tracks: List[Dict[str, Any]],
     mood_data: Dict[str, Any],
     user_context: Optional[Dict[str, Any]] = None,
-    desired_count: int = 30
+    desired_count: int = 30,
 ) -> Dict[str, Any]:
     """
     Curate a playlist using direct tool execution (simplified, reliable).
@@ -53,12 +53,14 @@ def curate_playlist_simple(
 
         # Check if tracks have audio features (premium feature)
         has_audio_features = any(
-            track.get('tempo') is not None and track.get('energy') is not None
+            track.get("tempo") is not None and track.get("energy") is not None
             for track in candidate_tracks[:5]  # Check first 5 tracks
         )
 
         if not has_audio_features:
-            logger.warning("[CURATOR] Audio features missing - using basic curation (popularity + shuffling)")
+            logger.warning(
+                "[CURATOR] Audio features missing - using basic curation (popularity + shuffling)"
+            )
 
             # FALLBACK: Simple curation without audio features
             # Use track popularity and simple randomization
@@ -66,9 +68,7 @@ def curate_playlist_simple(
 
             # Sort by popularity first, then shuffle top tracks
             sorted_tracks = sorted(
-                candidate_tracks,
-                key=lambda x: x.get('popularity', 0),
-                reverse=True
+                candidate_tracks, key=lambda x: x.get("popularity", 0), reverse=True
             )
 
             # Take more tracks than needed for diversity
@@ -82,8 +82,8 @@ def curate_playlist_simple(
             final_playlist = track_pool[:desired_count]
 
             # Generate simple explanation
-            mood_name = mood_data.get('primary_mood', 'your mood').title()
-            energy = mood_data.get('energy_level', 5)
+            mood_name = mood_data.get("primary_mood", "your mood").title()
+            energy = mood_data.get("energy_level", 5)
             track_count = len(final_playlist)
 
             explanation = (
@@ -93,7 +93,9 @@ def curate_playlist_simple(
                 f"audio analysis for even better personalization."
             )
 
-            logger.info(f"Basic curation complete: {track_count} tracks selected from {len(candidate_tracks)} candidates")
+            logger.info(
+                f"Basic curation complete: {track_count} tracks selected from {len(candidate_tracks)} candidates"
+            )
 
             execution_time = time.time() - start_time
 
@@ -102,22 +104,24 @@ def curate_playlist_simple(
                 "explanation": explanation,
                 "diversity_metrics": {
                     "track_count": track_count,
-                    "curation_method": "basic_popularity"
+                    "curation_method": "basic_popularity",
                 },
                 "track_count": track_count,
                 "execution_time": round(execution_time, 2),
                 "steps_completed": ["basic_curation"],
-                "premium_feature_used": False
+                "premium_feature_used": False,
             }
 
-        logger.info(f"Curating playlist from {len(candidate_tracks)} candidates for mood: {mood_data.get('primary_mood')}")
+        logger.info(
+            f"Curating playlist from {len(candidate_tracks)} candidates for mood: {mood_data.get('primary_mood')}"
+        )
 
         # Step 1: Rank tracks by relevance
         logger.info("Step 1: Ranking tracks by relevance...")
         rank_input = {
             "tracks_json": json.dumps(candidate_tracks),
             "mood_data_json": json.dumps(mood_data),
-            "user_context_json": json.dumps(user_context or {})
+            "user_context_json": json.dumps(user_context or {}),
         }
 
         ranked_result = rank_tracks_by_relevance(json.dumps(rank_input))
@@ -127,13 +131,13 @@ def curate_playlist_simple(
             ranked_data = json.loads(ranked_result)
             if isinstance(ranked_data, list):
                 ranked_tracks = ranked_data
-            elif isinstance(ranked_data, dict) and 'error' in ranked_data:
+            elif isinstance(ranked_data, dict) and "error" in ranked_data:
                 logger.error(f"Ranking error: {ranked_data['error']}")
                 return {
-                    "error": ranked_data['error'],
+                    "error": ranked_data["error"],
                     "execution_time": round(time.time() - start_time, 2),
                     "playlist": [],
-                    "explanation": "Failed to rank tracks."
+                    "explanation": "Failed to rank tracks.",
                 }
             else:
                 ranked_tracks = ranked_data
@@ -143,7 +147,7 @@ def curate_playlist_simple(
                 "error": str(e),
                 "execution_time": round(time.time() - start_time, 2),
                 "playlist": [],
-                "explanation": "Failed to parse ranked tracks."
+                "explanation": "Failed to parse ranked tracks.",
             }
 
         logger.info(f"Ranked {len(ranked_tracks)} tracks")
@@ -153,14 +157,14 @@ def curate_playlist_simple(
 
         diversity_input = {
             "ranked_tracks_json": json.dumps(ranked_tracks),
-            "desired_count": desired_count
+            "desired_count": desired_count,
         }
 
         diversity_result = optimize_diversity(json.dumps(diversity_input))
         diversity_data = json.loads(diversity_result)
 
-        playlist = diversity_data.get('playlist', [])
-        diversity_metrics = diversity_data.get('diversity_metrics', {})
+        playlist = diversity_data.get("playlist", [])
+        diversity_metrics = diversity_data.get("diversity_metrics", {})
 
         logger.info(f"Optimized playlist with {len(playlist)} tracks")
 
@@ -168,13 +172,13 @@ def curate_playlist_simple(
         logger.info("Step 3: Generating explanation...")
         explanation_input = {
             "playlist_json": json.dumps(diversity_data),
-            "mood_data_json": json.dumps(mood_data)
+            "mood_data_json": json.dumps(mood_data),
         }
 
         explanation_result = generate_explanation(json.dumps(explanation_input))
         explanation_data = json.loads(explanation_result)
 
-        explanation = explanation_data.get('explanation', 'Curated playlist for your mood.')
+        explanation = explanation_data.get("explanation", "Curated playlist for your mood.")
 
         logger.info(f"Generated explanation: {explanation[:100]}...")
 
@@ -188,7 +192,7 @@ def curate_playlist_simple(
             "diversity_metrics": diversity_metrics,
             "track_count": len(playlist),
             "execution_time": round(execution_time, 2),
-            "steps_completed": ["ranking", "diversity_optimization", "explanation_generation"]
+            "steps_completed": ["ranking", "diversity_optimization", "explanation_generation"],
         }
 
     except Exception as e:
@@ -199,5 +203,5 @@ def curate_playlist_simple(
             "error": str(e),
             "execution_time": round(execution_time, 2),
             "playlist": [],
-            "explanation": "Failed to curate playlist due to an error."
+            "explanation": "Failed to curate playlist due to an error.",
         }

@@ -1,21 +1,21 @@
 """
 MusicMood - Complete Professional UI Overhaul
 """
-import streamlit as st
-import requests
+
 import os
-from datetime import datetime
 from collections import Counter
+from datetime import datetime
+
+import requests
+import streamlit as st
 
 st.set_page_config(
-    page_title="MusicMood",
-    page_icon="🎵",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    page_title="MusicMood", page_icon="🎵", layout="wide", initial_sidebar_state="collapsed"
 )
 
 # PROFESSIONAL COMPLETE REDESIGN CSS
-st.markdown("""
+st.markdown(
+    """
 <style>
     /* ============ BASE STYLES ============ */
     * {
@@ -342,28 +342,36 @@ st.markdown("""
         border-top-color: #1db954 !important;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # API Config - support both Docker and local development
 # Read from environment variable (set in docker-compose.yml or locally)
 API_BASE = os.getenv("API_BASE_URL", "http://localhost:8001")
 
 # Session state
-if 'user_id' not in st.session_state:
+if "user_id" not in st.session_state:
     st.session_state.user_id = "user_demo"
 
 # ============ HEADER ============
-st.markdown("""
+st.markdown(
+    """
 <div style="text-align: center; margin-bottom: 0;">
     <h1>🎵 MusicMood</h1>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-st.markdown("""
+st.markdown(
+    """
 <div class="subtitle">
     AI-Powered Playlist Generator
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # ============ TABS ============
 tab1, tab2, tab3 = st.tabs(["🎵 Generate", "📚 Playlists", "📊 History"])
@@ -381,7 +389,7 @@ with tab1:
             value=st.session_state.user_id,
             placeholder="e.g., john_doe",
             key="user_id_input",
-            help="Enter a unique identifier for your account"
+            help="Enter a unique identifier for your account",
         )
         st.session_state.user_id = user_id
 
@@ -391,7 +399,7 @@ with tab1:
             value="20",
             placeholder="e.g., 20",
             key="track_count_input",
-            help="Enter a number between 5 and 50"
+            help="Enter a number between 5 and 50",
         )
 
         # Convert to integer with validation
@@ -407,13 +415,15 @@ with tab1:
         placeholder="e.g., I'm feeling energetic and ready to workout! I love fast-paced music with heavy bass.",
         key="mood_input",
         height=120,
-        help="Tell us how you're feeling or what vibe you want"
+        help="Tell us how you're feeling or what vibe you want",
     )
 
     st.markdown("")
 
     # Generate button with validation
-    if st.button("🚀 Generate Playlist", type="primary", key="generate_btn", use_container_width=True):
+    if st.button(
+        "🚀 Generate Playlist", type="primary", key="generate_btn", use_container_width=True
+    ):
         # Validation
         validation_errors = []
 
@@ -443,70 +453,84 @@ with tab1:
                         json={
                             "user_input": mood.strip(),
                             "user_id": user_id.strip(),
-                            "desired_count": count
+                            "desired_count": count,
                         },
-                        timeout=120
+                        timeout=120,
                     )
 
                     if response.status_code == 200:
                         result = response.json()
 
-                        st.success(f"✅ Successfully generated {len(result.get('tracks', []))} tracks!")
+                        st.success(
+                            f"✅ Successfully generated {len(result.get('tracks', []))} tracks!"
+                        )
 
                         # Mood Analysis Section
-                        if result.get('mood_data'):
+                        if result.get("mood_data"):
                             st.markdown("### 🎭 Mood Analysis")
-                            mood_data = result['mood_data']
+                            mood_data = result["mood_data"]
 
                             metric_col1, metric_col2, metric_col3 = st.columns(3)
                             with metric_col1:
-                                st.metric("Primary Mood", mood_data.get('primary_mood', 'N/A').title())
+                                st.metric(
+                                    "Primary Mood", mood_data.get("primary_mood", "N/A").title()
+                                )
                             with metric_col2:
                                 st.metric("Energy Level", f"{mood_data.get('energy_level', 0)}/10")
                             with metric_col3:
-                                st.metric("Intensity", f"{mood_data.get('emotional_intensity', 0)}/10")
+                                st.metric(
+                                    "Intensity", f"{mood_data.get('emotional_intensity', 0)}/10"
+                                )
 
                         # Tracks Section
-                        if result.get('tracks'):
+                        if result.get("tracks"):
                             st.markdown("### 🎵 Your Playlist")
                             st.markdown(f"*{len(result['tracks'])} tracks to match your mood*")
 
-                            for idx, track in enumerate(result['tracks'], 1):
-                                track_name = track.get('name', 'Unknown')
-                                artist_name = track.get('artist', 'Unknown')
+                            for idx, track in enumerate(result["tracks"], 1):
+                                track_name = track.get("name", "Unknown")
+                                artist_name = track.get("artist", "Unknown")
 
                                 with st.expander(f"**{idx}.** {track_name} — {artist_name}"):
                                     col1, col2 = st.columns([1, 1])
 
                                     with col1:
                                         st.write(f"**Album:** {track.get('album', 'N/A')}")
-                                        st.write(f"**Popularity:** {track.get('popularity', 0)}/100")
+                                        st.write(
+                                            f"**Popularity:** {track.get('popularity', 0)}/100"
+                                        )
                                         st.write(f"**Year:** {track.get('year', 'N/A')}")
 
                                     with col2:
-                                        if track.get('spotify_url'):
-                                            st.markdown(f"[🎵 Listen on Spotify]({track['spotify_url']})")
-                                        if track.get('preview_url'):
-                                            st.audio(track.get('preview_url'), format="audio/mp3")
+                                        if track.get("spotify_url"):
+                                            st.markdown(
+                                                f"[🎵 Listen on Spotify]({track['spotify_url']})"
+                                            )
+                                        if track.get("preview_url"):
+                                            st.audio(track.get("preview_url"), format="audio/mp3")
 
                         # Execution Time
-                        if result.get('total_execution_time'):
+                        if result.get("total_execution_time"):
                             st.info(f"⏱️ Generated in {result['total_execution_time']:.2f} seconds")
 
                     elif response.status_code == 404:
-                        st.error("❌ **404 ERROR** - API endpoint not found. Backend is running but endpoint '/api/generate-playlist' doesn't exist!")
+                        st.error(
+                            "❌ **404 ERROR** - API endpoint not found. Backend is running but endpoint '/api/generate-playlist' doesn't exist!"
+                        )
                     else:
                         st.error(f"❌ Error {response.status_code}: Unable to generate playlist")
 
                 except requests.exceptions.ConnectionError:
-                    st.error("""
+                    st.error(
+                        """
 ❌ **Backend API is not running**
 
 Please start the backend server:
 ```bash
 uvicorn app.backend.main:app --reload
 ```
-                    """)
+                    """
+                    )
                 except requests.exceptions.Timeout:
                     st.error("❌ Request timed out. The API is taking too long to respond.")
                 except Exception as e:
@@ -520,26 +544,28 @@ with tab2:
 
     st.markdown("")
 
-    if st.button("📥 Load Playlists", type="primary", key="load_playlists_btn", use_container_width=True):
+    if st.button(
+        "📥 Load Playlists", type="primary", key="load_playlists_btn", use_container_width=True
+    ):
         with st.spinner("Loading your playlists..."):
             try:
                 response = requests.get(
                     f"{API_BASE}/api/playlists/{st.session_state.user_id}",
                     params={"limit": 25, "offset": 0},
-                    timeout=10
+                    timeout=10,
                 )
 
                 if response.status_code == 200:
                     data = response.json()
-                    playlists = data.get('playlists', [])
+                    playlists = data.get("playlists", [])
 
                     if playlists:
                         st.success(f"✅ Found {data.get('total_count', 0)} saved playlists")
 
                         for idx, pl in enumerate(playlists, 1):
-                            mood = pl.get('mood', 'Unknown').title()
-                            tracks = pl.get('track_count', 0)
-                            date = pl.get('created_at', 'N/A')[:10]
+                            mood = pl.get("mood", "Unknown").title()
+                            tracks = pl.get("track_count", 0)
+                            date = pl.get("created_at", "N/A")[:10]
 
                             with st.expander(f"**{idx}.** {mood} — {tracks} tracks — {date}"):
                                 col1, col2 = st.columns([1, 1])
@@ -553,44 +579,52 @@ with tab2:
                                     st.write(f"**Mood:** {mood}")
 
                                 # Show explanation
-                                explanation = pl.get('explanation', '')
+                                explanation = pl.get("explanation", "")
                                 if explanation:
                                     st.markdown("**Description:**")
                                     st.info(explanation)
 
                                 # Show track list
-                                track_list = pl.get('tracks', [])
+                                track_list = pl.get("tracks", [])
                                 if track_list:
                                     st.markdown("---")
                                     st.markdown("**🎵 Track List:**")
                                     for track_idx, track in enumerate(track_list, 1):
-                                        track_name = track.get('name', 'Unknown')
-                                        artist_name = track.get('artist', 'Unknown')
-                                        album_name = track.get('album', 'Unknown')
+                                        track_name = track.get("name", "Unknown")
+                                        artist_name = track.get("artist", "Unknown")
+                                        album_name = track.get("album", "Unknown")
 
-                                        st.markdown(f"""
+                                        st.markdown(
+                                            f"""
                                         **{track_idx}.** {track_name}
                                         *Artist:* {artist_name} | *Album:* {album_name}
-                                        """)
+                                        """
+                                        )
                                 else:
                                     st.write("*No track details available*")
                     else:
-                        st.info("📝 No playlists found. Generate your first playlist in the **Generate** tab!")
+                        st.info(
+                            "📝 No playlists found. Generate your first playlist in the **Generate** tab!"
+                        )
 
                 elif response.status_code == 404:
-                    st.warning("⚠️ No playlists found for this user. Start by generating your first playlist!")
+                    st.warning(
+                        "⚠️ No playlists found for this user. Start by generating your first playlist!"
+                    )
                 else:
                     st.error(f"❌ Error {response.status_code}: Unable to load playlists")
 
             except requests.exceptions.ConnectionError:
-                st.error("""
+                st.error(
+                    """
 ❌ **Backend API is not running**
 
 Please start the backend server:
 ```bash
 uvicorn app.backend.main:app --reload
 ```
-                """)
+                """
+                )
             except requests.exceptions.Timeout:
                 st.error("❌ Request timed out. API is not responding.")
             except Exception as e:
@@ -604,24 +638,26 @@ with tab3:
 
     st.markdown("")
 
-    if st.button("📥 Load History", type="primary", key="load_history_btn", use_container_width=True):
+    if st.button(
+        "📥 Load History", type="primary", key="load_history_btn", use_container_width=True
+    ):
         with st.spinner("Loading your mood history..."):
             try:
                 response = requests.get(
                     f"{API_BASE}/api/mood-history/{st.session_state.user_id}",
                     params={"limit": 50, "offset": 0},
-                    timeout=10
+                    timeout=10,
                 )
 
                 if response.status_code == 200:
                     data = response.json()
-                    entries = data.get('history', [])
+                    entries = data.get("history", [])
 
                     if entries:
                         st.success(f"✅ Found {data.get('total_count', 0)} mood entries")
 
                         # Statistics Section
-                        moods = [e.get('primary_mood', 'unknown') for e in entries]
+                        moods = [e.get("primary_mood", "unknown") for e in entries]
                         mood_counts = Counter(moods)
 
                         st.markdown("### 📊 Statistics")
@@ -632,17 +668,19 @@ with tab3:
                         with stat_col2:
                             st.metric("Unique Moods", len(mood_counts))
                         with stat_col3:
-                            most_common = mood_counts.most_common(1)[0][0].title() if mood_counts else "N/A"
+                            most_common = (
+                                mood_counts.most_common(1)[0][0].title() if mood_counts else "N/A"
+                            )
                             st.metric("Most Common Mood", most_common)
 
                         # Recent Entries
                         st.markdown("### 📜 Recent Entries")
 
                         for idx, entry in enumerate(entries[:20], 1):
-                            mood = entry.get('primary_mood', 'Unknown').title()
-                            energy = entry.get('energy_level', 0)
-                            date = entry.get('timestamp', 'N/A')[:10]
-                            user_input = entry.get('user_input', '')
+                            mood = entry.get("primary_mood", "Unknown").title()
+                            energy = entry.get("energy_level", 0)
+                            date = entry.get("timestamp", "N/A")[:10]
+                            user_input = entry.get("user_input", "")
 
                             with st.expander(f"**{idx}.** {mood} — {date}"):
                                 st.write(f"**User Input:** {user_input[:100]}...")
@@ -653,22 +691,28 @@ with tab3:
                                 with col2:
                                     st.write(f"**Date:** {date}")
                     else:
-                        st.info("📝 No history found. Generate playlists to start tracking your moods!")
+                        st.info(
+                            "📝 No history found. Generate playlists to start tracking your moods!"
+                        )
 
                 elif response.status_code == 404:
-                    st.warning("⚠️ No mood history found for this user. Start by generating your first playlist!")
+                    st.warning(
+                        "⚠️ No mood history found for this user. Start by generating your first playlist!"
+                    )
                 else:
                     st.error(f"❌ Error {response.status_code}: Unable to load history")
 
             except requests.exceptions.ConnectionError:
-                st.error("""
+                st.error(
+                    """
 ❌ **Backend API is not running**
 
 Please start the backend server:
 ```bash
 uvicorn app.backend.main:app --reload
 ```
-                """)
+                """
+                )
             except requests.exceptions.Timeout:
                 st.error("❌ Request timed out. API is not responding.")
             except Exception as e:
@@ -676,8 +720,11 @@ uvicorn app.backend.main:app --reload
 
 # ============ FOOTER ============
 st.markdown("---")
-st.markdown("""
+st.markdown(
+    """
 <div class="footer">
     MusicMood © 2025 • Powered by AI
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
