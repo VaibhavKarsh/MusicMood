@@ -32,23 +32,23 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug Mode: {settings.DEBUG}")
     logger.info("=" * 70)
-    
+
     # Initialize database
     from app.db import init_db
     await init_db()
     logger.info("Database initialized")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("=" * 70)
     logger.info(f"Shutting down {settings.APP_NAME}")
-    
+
     # Close database connections
     from app.db import close_db
     await close_db()
     logger.info("Database connections closed")
-    
+
     logger.info("=" * 70)
 
 
@@ -85,7 +85,7 @@ async def log_requests(request, call_next):
     Log all HTTP requests and responses
     """
     logger.info(f"Request: {request.method} {request.url.path}")
-    
+
     try:
         response = await call_next(request)
         logger.info(f"Response: {response.status_code}")

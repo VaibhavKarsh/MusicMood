@@ -44,15 +44,15 @@ router = APIRouter(prefix="/api", tags=["Playlists"])
     summary="Generate personalized playlist from mood",
     description="""
     Generate a personalized music playlist based on natural language mood description.
-    
+
     This endpoint uses a 3-agent AI system:
     - Agent 1: Understands mood from natural language
     - Agent 2: Discovers relevant tracks from Spotify
     - Agent 3: Curates optimal playlist (Premium feature)
-    
+
     **Free Tier**: Provides mood understanding and track discovery
     **Premium**: Unlocks advanced playlist curation with audio analysis
-    
+
     **Examples**:
     - "I'm feeling happy and energetic today!"
     - "Need to focus on work"
@@ -99,14 +99,14 @@ async def generate_playlist(
 ):
     """
     Generate a personalized playlist based on user's mood.
-    
+
     Args:
         request: Playlist generation request with user input and preferences
         db: Database session
-        
+
     Returns:
         Generated playlist with tracks, explanation, and metadata
-        
+
     Raises:
         HTTPException: If playlist generation fails
     """
@@ -114,35 +114,35 @@ async def generate_playlist(
         # Validate inputs
         if not request.user_input or len(request.user_input.strip()) < 3:
             raise ValueError("User input must be at least 3 characters long")
-        
+
         if not request.user_id or len(request.user_id.strip()) < 3:
             raise ValueError("User ID must be at least 3 characters long")
-        
+
         if len(request.user_id.strip()) > 50:
             raise ValueError("User ID must be less than 50 characters")
-        
+
         if request.desired_count < 5 or request.desired_count > 50:
             raise ValueError("Desired count must be between 5 and 50")
-        
+
         logger.info(f"Received playlist generation request")
         logger.info(f"User input: '{request.user_input}'")
         logger.info(f"User ID: {request.user_id}")
         logger.info(f"Desired count: {request.desired_count}")
-        
+
         # Call the multi-agent orchestrator
         result = generate_playlist_with_agents(
             user_input=request.user_input,
             user_id=request.user_id,
             desired_count=request.desired_count
         )
-        
+
         # Log result summary
         if result.get('success'):
             logger.info(f"✓ Playlist generated successfully")
             logger.info(f"  Mood: {result.get('mood_data', {}).get('primary_mood', 'unknown')}")
             logger.info(f"  Tracks: {len(result.get('playlist', []))}")
             logger.info(f"  Execution time: {result.get('total_execution_time', 0):.2f}s")
-            
+
             # Save to database
             logger.info("Saving playlist to database...")
             save_playlist_result(
@@ -151,7 +151,7 @@ async def generate_playlist(
                 user_input=request.user_input,
                 playlist_result=result
             )
-            
+
         elif result.get('premium_feature_required'):
             logger.warning(f"⚠ Premium feature required")
             logger.info(f"  Mood analysis: ✓")
@@ -159,12 +159,12 @@ async def generate_playlist(
             logger.info(f"  Advanced curation: ⭐ Premium required")
         else:
             logger.error(f"✗ Playlist generation failed: {result.get('error', 'Unknown error')}")
-        
+
         # Convert result to response model
         diversity_data = result.get('diversity_metrics', {})
         if not diversity_data:
             diversity_data = {}
-        
+
         # Ensure all optional fields have default values if missing
         diversity_metrics = DiversityMetrics(
             unique_artists=diversity_data.get('unique_artists'),
@@ -176,7 +176,7 @@ async def generate_playlist(
             track_count=diversity_data.get('track_count'),
             curation_method=diversity_data.get('curation_method')
         )
-        
+
         response = GeneratePlaylistResponse(
             success=result.get('success', False),
             playlist=[TrackMetadata(**track) for track in result.get('playlist', [])],
@@ -191,9 +191,9 @@ async def generate_playlist(
             premium_feature_message=result.get('premium_feature_message'),
             error=result.get('error')
         )
-        
+
         return response
-        
+
     except ValueError as e:
         logger.error(f"Validation error: {e}")
         raise HTTPException(
@@ -216,12 +216,12 @@ async def generate_playlist(
 async def health_check():
     """
     Health check endpoint to verify API is running.
-    
+
     Returns:
         Health status information
     """
     from app.config.settings import settings
-    
+
     return {
         "status": "healthy",
         "version": settings.APP_VERSION,
@@ -250,27 +250,27 @@ async def get_user_playlists(
 ):
     """
     Get all playlists generated for a user.
-    
+
     Args:
         user_id: User identifier
         limit: Maximum number of playlists to return (default: 50)
         offset: Number of playlists to skip (default: 0)
         db: Database session
-        
+
     Returns:
         List of user's playlists with metadata
-        
+
     Raises:
         HTTPException: If retrieval fails
     """
     try:
         logger.info(f"Retrieving playlists for user: {user_id} (limit={limit}, offset={offset})")
-        
+
         # Find user by username or email
         user = db.query(User).filter(
             (User.email == user_id) | (User.username == user_id)
         ).first()
-        
+
         if not user:
             # No user found, return empty list
             logger.info(f"User '{user_id}' not found, returning empty list")
@@ -279,7 +279,7 @@ async def get_user_playlists(
                 playlists=[],
                 total_count=0
             )
-        
+
         # Query playlists for the user using their integer ID
         playlists = (
             db.query(PlaylistRecommendation)
@@ -289,12 +289,12 @@ async def get_user_playlists(
             .offset(offset)
             .all()
         )
-        
+
         # Get total count
         total = db.query(PlaylistRecommendation).filter(
             PlaylistRecommendation.user_id == user.id
         ).count()
-        
+
         # Convert to response format
         playlist_summaries = [
             PlaylistSummary(
@@ -308,15 +308,15 @@ async def get_user_playlists(
             )
             for p in playlists
         ]
-        
+
         logger.info(f"✓ Retrieved {len(playlist_summaries)} playlists (total: {total})")
-        
+
         return UserPlaylistsResponse(
             user_id=user_id,
             playlists=playlist_summaries,
             total_count=total
         )
-        
+
     except Exception as e:
         logger.error(f"Error retrieving playlists: {e}", exc_info=True)
         raise HTTPException(
@@ -338,55 +338,55 @@ async def submit_feedback(
 ):
     """
     Submit feedback for a playlist.
-    
+
     Args:
         feedback: Feedback request with rating and optional comments
         db: Database session
-        
+
     Returns:
         Confirmation of feedback submission
-        
+
     Raises:
         HTTPException: If submission fails or playlist not found
     """
     try:
         logger.info(f"Receiving feedback for playlist: {feedback.playlist_id}")
         logger.info(f"Rating: {feedback.rating}/5")
-        
+
         # Find the playlist
         playlist = db.query(PlaylistRecommendation).filter(
             PlaylistRecommendation.id == int(feedback.playlist_id)
         ).first()
-        
+
         if not playlist:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Playlist {feedback.playlist_id} not found"
             )
-        
+
         # Update feedback
         playlist.feedback_score = feedback.rating
-        
+
         # Store liked/disliked tracks if provided
         if feedback.liked_tracks or feedback.disliked_tracks:
             # This could be extended to store in a separate feedback_details table
             logger.info(f"  Liked tracks: {len(feedback.liked_tracks or [])}")
             logger.info(f"  Disliked tracks: {len(feedback.disliked_tracks or [])}")
-        
+
         # Store feedback text (could extend model to include this field)
         if feedback.feedback_text:
             logger.info(f"  Feedback: {feedback.feedback_text[:100]}...")
-        
+
         db.commit()
-        
+
         logger.info(f"✓ Feedback submitted successfully")
-        
+
         return FeedbackResponse(
             success=True,
             message="Feedback submitted successfully",
             playlist_id=feedback.playlist_id
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -412,27 +412,27 @@ async def get_mood_history(
 ):
     """
     Get mood history for a user.
-    
+
     Args:
         user_id: User identifier
         limit: Maximum number of entries to return (default: 30)
         offset: Number of entries to skip (default: 0)
         db: Database session
-        
+
     Returns:
         User's mood history with analysis
-        
+
     Raises:
         HTTPException: If retrieval fails
     """
     try:
         logger.info(f"Retrieving mood history for user: {user_id} (limit={limit}, offset={offset})")
-        
+
         # Find user by username or email
         user = db.query(User).filter(
             (User.email == user_id) | (User.username == user_id)
         ).first()
-        
+
         if not user:
             # No user found, return empty list
             logger.info(f"User '{user_id}' not found, returning empty list")
@@ -441,7 +441,7 @@ async def get_mood_history(
                 history=[],
                 total_count=0
             )
-        
+
         # Query mood entries for the user using their integer ID
         mood_entries = (
             db.query(MoodEntry)
@@ -451,10 +451,10 @@ async def get_mood_history(
             .offset(offset)
             .all()
         )
-        
+
         # Get total count
         total = db.query(MoodEntry).filter(MoodEntry.user_id == user.id).count()
-        
+
         # Convert to response format
         history_entries = [
             MoodHistoryEntry(
@@ -466,15 +466,15 @@ async def get_mood_history(
             )
             for entry in mood_entries
         ]
-        
+
         logger.info(f"✓ Retrieved {len(history_entries)} mood entries (total: {total})")
-        
+
         return MoodHistoryResponse(
             user_id=user_id,
             history=history_entries,
             total_count=total
         )
-        
+
     except Exception as e:
         logger.error(f"Error retrieving mood history: {e}", exc_info=True)
         raise HTTPException(

@@ -43,7 +43,7 @@ Tool Names: {tool_names}
 
 STRICT RULES:
 - You MUST call rank_tracks_by_relevance FIRST
-- You MUST call optimize_diversity SECOND  
+- You MUST call optimize_diversity SECOND
 - You MUST call generate_explanation THIRD
 - Do NOT skip any tools
 - Do NOT create playlists manually
@@ -57,7 +57,7 @@ Action: rank_tracks_by_relevance
 Action Input: the JSON inputs for ranking
 Observation: the result of the action
 Thought: Now I need to use optimize_diversity
-Action: optimize_diversity  
+Action: optimize_diversity
 Action Input: the ranked tracks from previous step
 Observation: the result of the action
 Thought: Finally I need to use generate_explanation
@@ -76,12 +76,12 @@ Thought:{agent_scratchpad}"""
 class PlaylistCuratorAgent:
     """
     Agent 3: Playlist Curator
-    
+
     This agent takes candidate tracks and mood data, then curates
     a personalized playlist using ranking, diversity optimization,
     and explanation generation.
     """
-    
+
     def __init__(self):
         """Initialize the Playlist Curator Agent."""
         try:
@@ -91,24 +91,24 @@ class PlaylistCuratorAgent:
                 base_url=settings.OLLAMA_BASE_URL,
                 temperature=0.3  # Lower temperature for more consistent curation
             )
-            
+
             # Define tools
             self.tools = [
                 rank_tracks_tool,
                 optimize_diversity_tool,
                 generate_explanation_tool
             ]
-            
+
             # Create prompt template
             self.prompt = PromptTemplate.from_template(CURATOR_AGENT_PROMPT)
-            
+
             # Create agent
             self.agent = create_react_agent(
                 llm=self.llm,
                 tools=self.tools,
                 prompt=self.prompt
             )
-            
+
             # Create executor
             self.executor = AgentExecutor(
                 agent=self.agent,
@@ -118,13 +118,13 @@ class PlaylistCuratorAgent:
                 handle_parsing_errors=True,
                 return_intermediate_steps=True
             )
-            
+
             logger.info("Playlist Curator Agent initialized with 3 tools")
-            
+
         except Exception as e:
             logger.error(f"Error initializing Playlist Curator Agent: {e}")
             raise
-    
+
     def curate_playlist(
         self,
         candidate_tracks: List[Dict[str, Any]],
@@ -134,13 +134,13 @@ class PlaylistCuratorAgent:
     ) -> Dict[str, Any]:
         """
         Curate a personalized playlist from candidate tracks.
-        
+
         Args:
             candidate_tracks: List of track dictionaries with audio features
             mood_data: Mood data from Agent 1
             user_context: Optional user preferences and history
             desired_count: Number of tracks for final playlist (default 30)
-            
+
         Returns:
             Dictionary with:
             - playlist: List of curated tracks
@@ -150,10 +150,10 @@ class PlaylistCuratorAgent:
         """
         import time
         start_time = time.time()
-        
+
         try:
             logger.info(f"Curating playlist from {len(candidate_tracks)} candidates for mood: {mood_data.get('primary_mood')}")
-            
+
             # Prepare input for agent
             input_data = {
                 "candidate_tracks": candidate_tracks,
@@ -161,7 +161,7 @@ class PlaylistCuratorAgent:
                 "user_context": user_context or {},
                 "desired_count": desired_count
             }
-            
+
             # Create agent input question
             question = f"""Curate a {desired_count}-track playlist for {mood_data.get('primary_mood')} mood.
 
@@ -181,40 +181,40 @@ playlist_json=(output from step 2)
 mood_data_json={json.dumps(mood_data)}
 
 Do NOT skip any steps. Use ALL tools."""
-            
+
             # Execute agent
             logger.info("Executing Playlist Curator Agent...")
             result = self.executor.invoke({"input": question})
-            
+
             execution_time = time.time() - start_time
-            
+
             # Extract results
             final_answer = result.get('output', '')
             intermediate_steps = result.get('intermediate_steps', [])
-            
+
             logger.info(f"Agent completed curation in {execution_time:.2f}s")
             logger.info(f"Agent took {len(intermediate_steps)} steps")
-            
+
             # Parse final answer to extract playlist and explanation
             parsed_result = self._parse_agent_output(final_answer, intermediate_steps)
             parsed_result['execution_time'] = round(execution_time, 2)
             parsed_result['curation_strategy'] = self._extract_strategy(intermediate_steps)
-            
+
             logger.info(f"Curated playlist with {len(parsed_result.get('playlist', []))} tracks")
-            
+
             return parsed_result
-            
+
         except Exception as e:
             logger.error(f"Error curating playlist: {e}")
             execution_time = time.time() - start_time
-            
+
             return {
                 "error": str(e),
                 "execution_time": round(execution_time, 2),
                 "playlist": [],
                 "explanation": "Failed to curate playlist due to an error."
             }
-    
+
     def _parse_agent_output(
         self,
         final_answer: str,
@@ -229,13 +229,13 @@ Do NOT skip any steps. Use ALL tools."""
             "diversity_metrics": {},
             "intermediate_steps_count": len(intermediate_steps)
         }
-        
+
         try:
             # Look through intermediate steps for tool outputs
             for step in intermediate_steps:
                 action, observation = step
                 tool_name = action.tool
-                
+
                 if tool_name == "optimize_diversity":
                     # Extract playlist from diversity optimization
                     try:
@@ -244,7 +244,7 @@ Do NOT skip any steps. Use ALL tools."""
                         result['diversity_metrics'] = diversity_result.get('diversity_metrics', {})
                     except:
                         pass
-                
+
                 elif tool_name == "generate_explanation":
                     # Extract explanation
                     try:
@@ -252,18 +252,18 @@ Do NOT skip any steps. Use ALL tools."""
                         result['explanation'] = explanation_result.get('explanation', '')
                     except:
                         pass
-            
+
             # If no explanation in steps, use final answer
             if not result['explanation']:
                 result['explanation'] = final_answer
-            
+
             logger.info(f"Parsed {len(result['playlist'])} tracks and explanation")
-            
+
         except Exception as e:
             logger.error(f"Error parsing agent output: {e}")
-        
+
         return result
-    
+
     def _extract_strategy(self, intermediate_steps: List[tuple]) -> Dict[str, Any]:
         """
         Extract curation strategy from intermediate steps.
@@ -272,12 +272,12 @@ Do NOT skip any steps. Use ALL tools."""
             "tools_used": [],
             "reasoning_steps": []
         }
-        
+
         for step in intermediate_steps:
             action, observation = step
             strategy['tools_used'].append(action.tool)
             strategy['reasoning_steps'].append(action.log)
-        
+
         return strategy
 
 

@@ -35,10 +35,10 @@ SessionLocal = sessionmaker(
 def get_db() -> Generator[Session, None, None]:
     """
     FastAPI dependency to get database session.
-    
+
     Yields:
         Session: SQLAlchemy database session
-        
+
     Example:
         @app.get("/users")
         def get_users(db: Session = Depends(get_db)):
@@ -55,10 +55,10 @@ def get_db() -> Generator[Session, None, None]:
 def get_db_context() -> Generator[Session, None, None]:
     """
     Context manager for database session outside of FastAPI.
-    
+
     Yields:
         Session: SQLAlchemy database session
-        
+
     Example:
         with get_db_context() as db:
             users = db.query(User).all()
@@ -96,12 +96,12 @@ async def init_db():
     """
     Initialize database on application startup.
     Creates tables if they don't exist.
-    
+
     Note: In production, use Alembic migrations instead.
     """
     # Import models to ensure they're registered
     from app.models import Base
-    
+
     # Create tables (only for development/testing)
     # In production, use: alembic upgrade head
     if settings.DEBUG:

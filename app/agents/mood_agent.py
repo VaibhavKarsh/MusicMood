@@ -55,17 +55,17 @@ class MoodUnderstandingAgent:
     """
     Agent that understands and structures user mood input.
     """
-    
+
     def __init__(self, db_session: Optional[Session] = None):
         """
         Initialize the Mood Understanding Agent.
-        
+
         Args:
             db_session: Optional database session for user context retrieval
         """
-        
+
         self.db_session = db_session
-        
+
         # Initialize LLM
         self.llm = OllamaLLM(
             model=settings.OLLAMA_MODEL,
@@ -73,10 +73,10 @@ class MoodUnderstandingAgent:
             temperature=0.3,  # Lower temperature for more consistent parsing
             num_predict=settings.OLLAMA_MAX_TOKENS,
         )
-        
+
         # Setup tools
         self.tools = self._setup_tools()
-        
+
         # Create prompt
         self.prompt = PromptTemplate(
             template=MOOD_AGENT_PROMPT,
@@ -86,14 +86,14 @@ class MoodUnderstandingAgent:
                 "tool_names": ", ".join([tool.name for tool in self.tools])
             }
         )
-        
+
         # Create agent
         self.agent = create_react_agent(
             llm=self.llm,
             tools=self.tools,
             prompt=self.prompt
         )
-        
+
         # Create executor
         self.agent_executor = AgentExecutor(
             agent=self.agent,
@@ -103,28 +103,28 @@ class MoodUnderstandingAgent:
             handle_parsing_errors=True,
             return_intermediate_steps=True
         )
-        
+
         logger.info(f"Mood Understanding Agent initialized with {len(self.tools)} tools")
-    
+
     def _setup_tools(self) -> List[Tool]:
         """Setup tools for the agent."""
-        
+
         tools = [parse_mood_tool]
-        
+
         # Add user context tool if database session is available
         if self.db_session:
             user_context_tool = create_get_user_context_tool(self.db_session)
             tools.append(user_context_tool)
-        
+
         return tools
-    
+
     def _format_tools(self) -> str:
         """Format tools for the prompt."""
         tool_strings = []
         for tool in self.tools:
             tool_strings.append(f"- {tool.name}: {tool.description}")
         return "\n".join(tool_strings)
-    
+
     def analyze_mood(
         self,
         mood_text: str,
@@ -132,31 +132,31 @@ class MoodUnderstandingAgent:
     ) -> Dict[str, Any]:
         """
         Analyze user mood and return structured data.
-        
+
         Args:
             mood_text: User's mood description
             user_id: Optional user ID for context
-            
+
         Returns:
             Dictionary with mood data and agent reasoning
         """
-        
+
         logger.info(f"Analyzing mood: {mood_text[:100]}...")
-        
+
         try:
             # Build input
             agent_input = f"Analyze this mood: '{mood_text}'"
-            
+
             if user_id and self.db_session:
                 agent_input += f" (User ID: {user_id})"
-            
+
             # Run agent
             result = self.agent_executor.invoke({"input": agent_input})
-            
+
             # Extract mood data from final answer
             import json
             mood_data = json.loads(result["output"])
-            
+
             # Add agent metadata
             response = {
                 "mood_data": mood_data,
@@ -164,13 +164,13 @@ class MoodUnderstandingAgent:
                 "reasoning": self._extract_reasoning(result),
                 "success": True
             }
-            
+
             logger.info(f"Mood analysis complete: {mood_data.get('primary_mood')}")
             return response
-        
+
         except Exception as e:
             logger.error(f"Error in mood analysis: {e}")
-            
+
             # Return fallback
             import json
             fallback_mood = json.dumps({
@@ -180,7 +180,7 @@ class MoodUnderstandingAgent:
                 "context": "general",
                 "mood_tags": ["neutral"]
             })
-            
+
             return {
                 "mood_data": json.loads(fallback_mood),
                 "agent_steps": 0,
@@ -188,19 +188,19 @@ class MoodUnderstandingAgent:
                 "success": False,
                 "error": str(e)
             }
-    
+
     def _extract_reasoning(self, result: Dict) -> str:
         """Extract agent reasoning from result."""
-        
+
         steps = result.get("intermediate_steps", [])
-        
+
         if not steps:
             return "No reasoning steps"
-        
+
         reasoning_parts = []
         for action, observation in steps:
             reasoning_parts.append(f"Tool: {action.tool}, Input: {action.tool_input[:100]}")
-        
+
         return " | ".join(reasoning_parts)
 
 
@@ -208,10 +208,10 @@ class MoodUnderstandingAgent:
 def create_mood_agent(db_session: Optional[Session] = None) -> MoodUnderstandingAgent:
     """
     Create a Mood Understanding Agent instance.
-    
+
     Args:
         db_session: Optional database session
-        
+
     Returns:
         MoodUnderstandingAgent instance
     """

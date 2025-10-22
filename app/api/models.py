@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class GeneratePlaylistRequest(BaseModel):
     """Request model for generating a playlist"""
-    
+
     user_input: str = Field(
         ...,
         description="Natural language mood description",
@@ -20,20 +20,20 @@ class GeneratePlaylistRequest(BaseModel):
         max_length=500,
         examples=["I'm feeling happy and energetic today!", "Need focus music for work"]
     )
-    
+
     user_id: Optional[str] = Field(
         default="anonymous",
         description="User ID for personalization (optional)",
         max_length=100
     )
-    
+
     desired_count: int = Field(
         default=30,
         description="Number of tracks in final playlist",
         ge=5,
         le=50
     )
-    
+
     @field_validator('user_input')
     @classmethod
     def validate_user_input(cls, v: str) -> str:
@@ -45,7 +45,7 @@ class GeneratePlaylistRequest(BaseModel):
 
 class FeedbackRequest(BaseModel):
     """Request model for user feedback on playlists"""
-    
+
     playlist_id: str = Field(..., description="ID of the playlist")
     user_id: str = Field(..., description="ID of the user providing feedback")
     rating: int = Field(..., description="Rating 1-5", ge=1, le=5)
@@ -60,7 +60,7 @@ class FeedbackRequest(BaseModel):
 
 class TrackMetadata(BaseModel):
     """Track metadata model"""
-    
+
     id: str
     name: str
     artist: str
@@ -78,7 +78,7 @@ class TrackMetadata(BaseModel):
 
 class DiversityMetrics(BaseModel):
     """Diversity metrics model"""
-    
+
     unique_artists: Optional[int] = None
     tempo_mean: Optional[float] = None
     tempo_std: Optional[float] = None
@@ -91,7 +91,7 @@ class DiversityMetrics(BaseModel):
 
 class MoodData(BaseModel):
     """Mood analysis data model"""
-    
+
     primary_mood: str
     energy_level: int
     emotional_intensity: int
@@ -101,7 +101,7 @@ class MoodData(BaseModel):
 
 class ExecutionTimes(BaseModel):
     """Execution time breakdown model"""
-    
+
     agent1_mood_understanding: Optional[float] = None
     agent2_music_discovery: Optional[float] = None
     agent3_playlist_curator: Optional[float] = None
@@ -109,7 +109,7 @@ class ExecutionTimes(BaseModel):
 
 class GeneratePlaylistResponse(BaseModel):
     """Response model for playlist generation"""
-    
+
     success: bool
     playlist: List[TrackMetadata]
     explanation: str
@@ -126,7 +126,7 @@ class GeneratePlaylistResponse(BaseModel):
 
 class PlaylistSummary(BaseModel):
     """Summary of a saved playlist"""
-    
+
     id: str
     user_id: str
     created_at: str
@@ -138,7 +138,7 @@ class PlaylistSummary(BaseModel):
 
 class UserPlaylistsResponse(BaseModel):
     """Response model for user's playlists"""
-    
+
     user_id: str
     playlists: List[PlaylistSummary]
     total_count: int
@@ -146,7 +146,7 @@ class UserPlaylistsResponse(BaseModel):
 
 class MoodHistoryEntry(BaseModel):
     """Mood history entry model"""
-    
+
     timestamp: str
     primary_mood: str
     energy_level: int
@@ -156,7 +156,7 @@ class MoodHistoryEntry(BaseModel):
 
 class MoodHistoryResponse(BaseModel):
     """Response model for mood history"""
-    
+
     user_id: str
     history: List[MoodHistoryEntry]
     total_count: int
@@ -164,7 +164,7 @@ class MoodHistoryResponse(BaseModel):
 
 class FeedbackResponse(BaseModel):
     """Response model for feedback submission"""
-    
+
     success: bool
     message: str
     feedback_id: Optional[str] = None
@@ -172,7 +172,7 @@ class FeedbackResponse(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     """Health check response model"""
-    
+
     status: str
     version: str
     environment: str
@@ -181,7 +181,7 @@ class HealthCheckResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Standard error response model"""
-    
+
     error: str
     detail: Optional[str] = None
     error_code: Optional[str] = None

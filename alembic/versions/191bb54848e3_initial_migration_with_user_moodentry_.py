@@ -1,7 +1,7 @@
 """Initial migration with User, MoodEntry, PlaylistRecommendation models
 
 Revision ID: 191bb54848e3
-Revises: 
+Revises:
 Create Date: 2025-10-21 16:16:39.437436
 
 """

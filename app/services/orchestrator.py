@@ -31,17 +31,17 @@ def generate_playlist_with_agents(
 ) -> Dict[str, Any]:
     """
     Generate a personalized playlist using the 3-agent pipeline.
-    
+
     Pipeline:
     1. Agent 1 (Mood Understanding): Analyzes user input → mood_data
     2. Agent 2 (Music Discovery): Searches Spotify → candidate_tracks
     3. Agent 3 (Playlist Curator): Curates final playlist → final_playlist + explanation
-    
+
     Args:
         user_input: Natural language mood description from user
         user_id: Optional user ID for personalization
         desired_count: Number of tracks in final playlist (default 30)
-        
+
     Returns:
         Dictionary containing:
         - playlist: List of curated tracks
@@ -52,7 +52,7 @@ def generate_playlist_with_agents(
         - total_execution_time: Total pipeline time
     """
     pipeline_start_time = time.time()
-    
+
     result = {
         "success": False,
         "playlist": [],
@@ -63,7 +63,7 @@ def generate_playlist_with_agents(
         "total_execution_time": 0,
         "pipeline_steps": []
     }
-    
+
     try:
         logger.info("=" * 80)
         logger.info("MULTI-AGENT ORCHESTRATION STARTED")
@@ -71,74 +71,74 @@ def generate_playlist_with_agents(
         logger.info(f"User ID: {user_id}")
         logger.info(f"Desired Count: {desired_count}")
         logger.info("=" * 80)
-        
+
         # ================================================================
         # AGENT 1: MOOD UNDERSTANDING
         # ================================================================
         logger.info("\n[AGENT 1] Mood Understanding Agent - Starting...")
         agent1_start = time.time()
-        
+
         try:
             # Get or create mood agent (cached)
             global _mood_agent_cache
             if _mood_agent_cache is None:
                 _mood_agent_cache = create_mood_agent()
             mood_agent = _mood_agent_cache
-            
+
             mood_result = mood_agent.analyze_mood(user_input, user_id=user_id)
-            
+
             if mood_result.get('error'):
                 logger.error(f"Agent 1 error: {mood_result['error']}")
                 result['error'] = f"Mood analysis failed: {mood_result['error']}"
                 return result
-            
+
             mood_data = mood_result.get('mood_data', {})
             agent1_time = time.time() - agent1_start
-            
+
             result['mood_data'] = mood_data
             result['execution_times']['agent1_mood_understanding'] = round(agent1_time, 2)
             result['pipeline_steps'].append('agent1_mood_understanding')
-            
+
             logger.info(f"[AGENT 1] Complete in {agent1_time:.2f}s")
             logger.info(f"[AGENT 1] Mood: {mood_data.get('primary_mood')} (energy: {mood_data.get('energy_level')}/10)")
-            
+
         except Exception as e:
             logger.error(f"[AGENT 1] Error: {e}")
             result['error'] = f"Agent 1 failed: {str(e)}"
             return result
-        
+
         # ================================================================
         # AGENT 2: MUSIC DISCOVERY (SPOTIFY)
         # ================================================================
         logger.info("\n[AGENT 2] Music Discovery (Spotify) - Starting...")
         agent2_start = time.time()
-        
+
         try:
             # Use Spotify search tool to find candidate tracks
             import json
             from app.tools.spotify_tools import get_audio_features_batch
-            
+
             search_result_json = search_spotify_by_mood(json.dumps(mood_data))
             search_result = json.loads(search_result_json)
-            
+
             if search_result.get('error'):
                 logger.error(f"Agent 2 error: {search_result['error']}")
                 result['error'] = f"Music discovery failed: {search_result['error']}"
                 return result
-            
+
             candidate_tracks = search_result.get('tracks', [])
             logger.info(f"[AGENT 2] Found {len(candidate_tracks)} candidate tracks")
-            
+
             if len(candidate_tracks) == 0:
                 result['error'] = "No tracks found for this mood"
                 return result
-            
+
             # Enrich tracks with audio features (PREMIUM FEATURE - requires Spotify Premium API access)
             logger.info(f"[AGENT 2] Fetching audio features from Spotify API (Premium Feature)...")
             track_ids = [track['id'] for track in candidate_tracks]
             features_result_json = get_audio_features_batch(json.dumps(track_ids))
             features_result = json.loads(features_result_json)
-            
+
             if features_result.get('error'):
                 # Audio features unavailable - this is a premium feature
                 logger.warning(f"[AGENT 2] Audio features API unavailable - Premium feature required")
@@ -150,7 +150,7 @@ def generate_playlist_with_agents(
                 )
             else:
                 features_map = {f['id']: f for f in features_result.get('audio_features', [])}
-                
+
                 # Merge audio features into candidate tracks
                 enriched_tracks = []
                 for track in candidate_tracks:
@@ -168,29 +168,29 @@ def generate_playlist_with_agents(
                             'speechiness': features.get('speechiness'),
                         })
                     enriched_tracks.append(track)
-                
+
                 candidate_tracks = enriched_tracks
                 logger.info(f"[AGENT 2] ✓ Enriched {len(enriched_tracks)} tracks with audio features")
-            
+
             agent2_time = time.time() - agent2_start
-            
+
             result['candidate_tracks_count'] = len(candidate_tracks)
             result['execution_times']['agent2_music_discovery'] = round(agent2_time, 2)
             result['pipeline_steps'].append('agent2_music_discovery')
-            
+
             logger.info(f"[AGENT 2] Complete in {agent2_time:.2f}s")
-            
+
         except Exception as e:
             logger.error(f"[AGENT 2] Error: {e}")
             result['error'] = f"Agent 2 failed: {str(e)}"
             return result
-        
+
         # ================================================================
         # AGENT 3: PLAYLIST CURATOR
         # ================================================================
         logger.info("\n[AGENT 3] Playlist Curator - Starting...")
         agent3_start = time.time()
-        
+
         try:
             # Get user context (placeholder for now)
             user_context = {
@@ -199,7 +199,7 @@ def generate_playlist_with_agents(
                 "favorite_genres": [],
                 "recent_artists": []
             }
-            
+
             # Curate playlist using simplified curator
             curation_result = curate_playlist_simple(
                 candidate_tracks=candidate_tracks,
@@ -207,37 +207,37 @@ def generate_playlist_with_agents(
                 user_context=user_context,
                 desired_count=min(desired_count, len(candidate_tracks))
             )
-            
+
             # Check for curation errors
             if curation_result.get('error'):
                 logger.error(f"Agent 3 error: {curation_result['error']}")
                 result['error'] = f"Playlist curation failed: {curation_result['error']}"
                 return result
                 return result
-            
+
             agent3_time = time.time() - agent3_start
-            
+
             result['playlist'] = curation_result.get('playlist', [])
             result['explanation'] = curation_result.get('explanation', '')
             result['diversity_metrics'] = curation_result.get('diversity_metrics', {})
             result['execution_times']['agent3_playlist_curator'] = round(agent3_time, 2)
             result['pipeline_steps'].append('agent3_playlist_curator')
-            
+
             logger.info(f"[AGENT 3] Complete in {agent3_time:.2f}s")
             logger.info(f"[AGENT 3] Curated {len(result['playlist'])} tracks")
-            
+
         except Exception as e:
             logger.error(f"[AGENT 3] Error: {e}")
             result['error'] = f"Agent 3 failed: {str(e)}"
             return result
-        
+
         # ================================================================
         # PIPELINE COMPLETE
         # ================================================================
         total_time = time.time() - pipeline_start_time
         result['total_execution_time'] = round(total_time, 2)
         result['success'] = True
-        
+
         logger.info("\n" + "=" * 80)
         logger.info("MULTI-AGENT ORCHESTRATION COMPLETE")
         logger.info(f"Total Execution Time: {total_time:.2f}s")
@@ -247,9 +247,9 @@ def generate_playlist_with_agents(
         logger.info(f"Final Playlist: {len(result['playlist'])} tracks")
         logger.info(f"Diversity Score: {result['diversity_metrics'].get('diversity_score', 0):.1f}/100")
         logger.info("=" * 80)
-        
+
         return result
-        
+
     except Exception as e:
         logger.error(f"Orchestration error: {e}")
         total_time = time.time() - pipeline_start_time
@@ -265,7 +265,7 @@ def generate_playlist_with_error_handling(
 ) -> Dict[str, Any]:
     """
     Generate playlist with comprehensive error handling and fallbacks.
-    
+
     This wrapper provides additional error handling around the main
     orchestration function.
     """

@@ -1,6 +1,6 @@
 # MusicMood 🎵🧠
 
-**A Production-Grade 3-Agent AI System for Mood-Based Music Recommendations**
+**An AI System for Mood-Based Music Recommendations**
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
@@ -8,23 +8,23 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![CI](https://github.com/OWNER/musicmood/workflows/CI%20-%20Build%20and%20Test/badge.svg)
-![Docker](https://github.com/OWNER/musicmood/workflows/CD%20-%20Docker%20Build%20%26%20Push/badge.svg)
-![CodeQL](https://github.com/OWNER/musicmood/workflows/CodeQL%20Analysis/badge.svg)
+![CI](https://github.com/YOUR_USERNAME/musicmood/workflows/CI%20-%20Build%20and%20Test/badge.svg)
+![Docker](https://github.com/YOUR_USERNAME/musicmood/workflows/CD%20-%20Docker%20Build%20%26%20Push/badge.svg)
 
 ## 🎯 Project Overview
 
 MusicMood is an intelligent music recommendation system that uses a **multi-agent AI architecture** to understand user moods and generate personalized Spotify playlists. The system employs three specialized AI agents working sequentially to analyze mood, discover music, and curate the perfect playlist.
 
-### Key Features
+### ✨ Key Features
 
-- **🤖 3-Agent AI Architecture**: Specialized agents for mood understanding, music discovery, and playlist curation
-- **🧰 8 LangChain Tools**: Custom tools distributed across agents (2+3+3) for intelligent reasoning
-- **🧠 ReAct Pattern**: Agents use reasoning and action loops for transparent decision-making
-- **🎸 Spotify Integration**: Real-time music search and audio feature analysis
-- **💾 Intelligent Caching**: Redis-based caching for optimal performance
-- **📊 User Personalization**: Historical mood tracking and preference learning
-- **⚡ Fast Performance**: Complete pipeline executes in <10 seconds
+- **🤖 3-Agent AI System**: Specialized agents working sequentially (Mood → Discovery → Curation)
+- **🧰 8 Custom LangChain Tools**: Distributed across agents (2+3+3) for intelligent reasoning
+- **🧠 Local AI (Ollama)**: Runs gemma3:4b model locally - no API costs!
+- **🎸 Real Spotify Data**: Live music search with 50+ audio features per track
+- **💾 Smart Caching**: Redis-based caching for instant repeat queries
+- **📊 Mood History**: Track your mood journey and music preferences over time
+- **🐳 Fully Dockerized**: One command to run everything - no complex setup
+- **⚡ Production-Ready**: Complete CI/CD pipeline with GitHub Actions
 
 ## 🏗️ Architecture
 
@@ -62,102 +62,150 @@ Final Playlist + Explanation
 ### Technology Stack
 
 **AI/ML Layer:**
-- **Ollama + Mistral 7B**: Local LLM for mood understanding and reasoning
-- **LangChain**: Agent framework with ReAct pattern implementation
-- **Sentence Transformers**: Mood embeddings for similarity matching
+- **Ollama + Gemma 3 (4B)**: Local LLM for mood understanding and reasoning (no API costs!)
+- **LangChain 0.3+**: Agent framework with ReAct pattern
+- **Pydantic AI**: Structured outputs for reliability
 
 **Backend:**
-- **FastAPI**: High-performance REST API
-- **SQLAlchemy**: ORM for PostgreSQL database
-- **Redis**: Caching layer for performance optimization
-- **Pydantic**: Data validation and settings management
+- **FastAPI 0.115+**: High-performance async REST API
+- **SQLAlchemy 2.0**: Modern ORM with PostgreSQL 15
+- **Redis 7**: Advanced caching with pub/sub
+- **Alembic**: Database migrations
 
 **APIs:**
-- **Spotify Web API**: Music search and audio feature analysis
-- **OpenWeatherMap API**: Weather context for mood enhancement
+- **Spotify Web API**: 50+ audio features per track, real-time search
+- **Supports multiple models**: Ollama (local), Replicate, OpenAI
 
 **Frontend:**
-- **Streamlit**: Interactive web interface for playlist generation
+- **Streamlit 1.39+**: Clean, responsive UI with dark theme
 
-**Deployment:**
-- **Docker**: Containerization for all services
-- **GitHub Actions**: CI/CD pipeline
-- **Railway/Streamlit Cloud**: Production hosting
+**DevOps:**
+- **Docker Compose**: 5 containers orchestrated (Backend, Frontend, DB, Cache, AI)
+- **GitHub Actions**: 2 automated workflows (CI build + CD docker push)
+- **Multi-stage Builds**: Optimized Docker images
 
-## 📋 Prerequisites
+## 📋 What You Need
 
-Before starting, ensure you have:
+**For Docker Setup (Recommended):**
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) - That's it! Everything else runs in containers
+- [Spotify Developer Account](https://developer.spotify.com/dashboard) - Free API credentials
 
-1. **Python 3.11+** installed
-2. **Poetry** for dependency management
-3. **PostgreSQL 15+** running locally
-4. **Redis 7+** running locally
-5. **Ollama** installed with Mistral model
-6. **Spotify Developer Account** (for API credentials)
-7. **OpenWeatherMap Account** (for API key)
+**For Manual Setup (Advanced):**
+- Python 3.11+
+- PostgreSQL 15+
+- Redis 7+
+- Ollama with gemma3:4b model
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Docker - Recommended)
 
-### 1. Clone and Setup Environment
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running
+- Spotify API credentials ([Get them here](https://developer.spotify.com/dashboard))
 
-```powershell
-# Navigate to project directory
-cd e:\Portfolio\MusicMood
+### 1. Clone the Repository
 
-# Install dependencies with Poetry
-poetry install
-
-# Activate virtual environment
-poetry shell
+```bash
+git clone https://github.com/YOUR_USERNAME/MusicMood.git
+cd MusicMood
 ```
 
-### 2. Configure Environment Variables
+### 2. Configure Environment
 
-```powershell
-# Copy example env file
+```bash
+# Copy example environment file
 cp .env.example .env
 
-# Edit .env and add your API credentials:
-# - SPOTIFY_CLIENT_ID
-# - SPOTIFY_CLIENT_SECRET
-# - OPENWEATHER_API_KEY
+# Edit .env and add your Spotify credentials
+# SPOTIFY_CLIENT_ID=your_client_id_here
+# SPOTIFY_CLIENT_SECRET=your_client_secret_here
 ```
 
-### 3. Start Required Services
+### 3. Start Everything with One Command! 🚀
 
 ```powershell
-# Start Ollama (in separate terminal)
-ollama serve
+# Windows
+.\start-app.ps1 start
 
-# Pull Mistral model
-ollama pull mistral
-
-# Start PostgreSQL (should be running as service)
-# Start Redis (should be running as service)
+# Linux/Mac
+docker-compose up -d
 ```
 
-### 4. Initialize Database
+That's it! The script will:
+- ✅ Start all 5 Docker containers (Backend, Frontend, PostgreSQL, Redis, Ollama)
+- ✅ Run database migrations automatically
+- ✅ Download AI models (gemma3:4b - 3.3GB)
+- ✅ Perform health checks
+- ✅ Show you when everything is ready
+
+### 4. Access the Application
+
+Once you see "✅ All services are healthy!", open:
+
+- **🎵 Web App**: http://localhost:8501
+- **📚 API Docs**: http://localhost:8001/docs
+- **🏥 Health Check**: http://localhost:8001/health
+
+### 5. Generate Your First Playlist!
+
+1. Open http://localhost:8501
+2. Enter your mood (e.g., "I'm feeling happy and energetic!")
+3. Click "Generate Playlist"
+4. Wait ~30 seconds for AI magic ✨
+5. Enjoy your personalized playlist!
+
+## 🛠️ Management Commands
 
 ```powershell
-# Run database migrations
-poetry run alembic upgrade head
+# Check status of all services
+.\start-app.ps1 status
+
+# Stop all services
+.\start-app.ps1 stop
+
+# Restart everything
+.\start-app.ps1 restart
+
+# View live logs
+.\start-app.ps1 logs
+
+# Get help
+.\start-app.ps1 help
 ```
 
-### 5. Start the Application
+## 💻 Manual Setup (Without Docker)
 
-```powershell
-# Start FastAPI backend
-poetry run uvicorn app.main:app --reload --port 8000
+<details>
+<summary>Click to expand manual setup instructions</summary>
 
-# In another terminal, start Streamlit frontend
-poetry run streamlit run app/frontend/streamlit_app.py
-```
+### Prerequisites
+- Python 3.11+
+- PostgreSQL 15+
+- Redis 7+
+- Ollama with gemma3:4b model
 
-### 6. Access the Application
+### Steps
 
-- **API Documentation**: http://localhost:8000/docs
-- **Streamlit UI**: http://localhost:8501
-- **Health Check**: http://localhost:8000/api/health
+1. **Install Dependencies**
+   ```bash
+   poetry install
+   poetry shell
+   ```
+
+2. **Setup Database**
+   ```bash
+   alembic upgrade head
+   ```
+
+3. **Start Services**
+   ```bash
+   # Terminal 1: Backend
+   uvicorn app.main:app --reload --port 8001
+   
+   # Terminal 2: Frontend
+   streamlit run app/frontend/minimal_app.py
+   ```
+
+</details>
 
 ## 📁 Project Structure
 
@@ -209,18 +257,16 @@ poetry run pytest tests/test_agents.py
 poetry run python test_imports.py
 ```
 
-## 📊 Performance Benchmarks
+## 📊 Performance
 
-| Metric | Target | Actual |
-|--------|--------|--------|
-| Agent 1 Latency | <2s | TBD |
-| Agent 2 Latency | <5s | TBD |
-| Agent 3 Latency | <2s | TBD |
-| End-to-End Pipeline | <10s | TBD |
-| Cache Hit Latency | <500ms | TBD |
-| Mood Parsing Accuracy | >90% | TBD |
-| Track Filtering Accuracy | >85% | TBD |
-| Ranking Relevance | >80% | TBD |
+| Metric | Performance |
+|--------|-------------|
+| **End-to-End Pipeline** | ~30 seconds (first run with local AI) |
+| **Cache Hit Response** | <1 second |
+| **Docker Startup** | ~30 seconds (all 5 containers healthy) |
+| **AI Model Size** | 3.3GB (gemma3:4b) |
+| **Memory Usage** | ~4GB total (all containers) |
+| **Database Tables** | 4 (users, moods, playlists, tracks) |
 
 ## 🔧 Development Workflow
 
@@ -258,36 +304,29 @@ poetry run python test_imports.py
 - [ ] Cloud deployment (Render.com + Streamlit Cloud)
 - [x] Comprehensive documentation
 
-## ☁️ Cloud Deployment
+## 📸 Screenshots & Demo
 
-Deploy MusicMood to production using free cloud services:
+<details>
+<summary>Click to see screenshots</summary>
 
-### Quick Deploy
+### Main Interface
+![Main UI](docs/screenshots/main-ui.png)
 
-1. **Backend** (Render.com):
-   ```bash
-   # Push to GitHub
-   git push origin main
-   
-   # Follow DEPLOYMENT_GUIDE.md for Render setup
-   ```
+### Playlist Generation
+![Generation](docs/screenshots/generation.png)
 
-2. **Frontend** (Streamlit Cloud):
-   - Connect your GitHub repo
-   - Deploy at [share.streamlit.io](https://share.streamlit.io)
+### Mood History
+![History](docs/screenshots/history.png)
 
-3. **Pre-deployment Check**:
-   ```powershell
-   .\deploy.ps1 check
-   ```
+</details>
 
-📚 **Complete Guide**: See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed instructions.
+## 🎥 Demo Video
 
-### Deployment Stack
-- **Backend**: Render.com (FastAPI + PostgreSQL + Redis)
-- **Frontend**: Streamlit Community Cloud
-- **LLM**: Replicate API (Llama 2) or self-hosted Ollama
-- **CI/CD**: GitHub Actions (automated)
+> Coming soon! Will include:
+> - Quick setup demonstration
+> - Playlist generation walkthrough
+> - Architecture explanation
+> - Performance benchmarks
 
 ## 🤝 Contributing
 
@@ -310,14 +349,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Spotify** for comprehensive music API
 - **FastAPI** for the excellent web framework
 
-## 📞 Contact
+## 📞 Connect
 
-**Portfolio Project for Mrsool Interview**
+**Portfolio Project** showcasing production-grade AI engineering
 
-- GitHub: [Your GitHub Profile]
-- LinkedIn: [Your LinkedIn]
-- Email: [Your Email]
+- **GitHub**: [github.com/YOUR_USERNAME](https://github.com/YOUR_USERNAME)
+- **LinkedIn**: [linkedin.com/in/YOUR_PROFILE](https://linkedin.com/in/YOUR_PROFILE)
+- **Portfolio**: [your-portfolio-site.com](https://your-portfolio-site.com)
 
 ---
 
+<div align="center">
+
 **Built with ❤️ using LangChain, FastAPI, and Ollama**
+
+⭐ Star this repo if you found it helpful!
+
+</div>
