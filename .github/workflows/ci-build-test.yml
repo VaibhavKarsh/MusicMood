@@ -19,12 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Free Disk Space
+      - name: Maximize Disk Space
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo docker system prune -af
+          echo "=== Disk space before ==="
+          df -h
+          sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-sdk hhvm google-chrome-stable firefox
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo rm -rf /usr/local/share/boost /usr/share/swift
+          echo "=== Disk space after ==="
           df -h
 
       - name: Checkout code
@@ -103,10 +107,11 @@ jobs:
           - 6379:6379
 
     steps:
-      - name: Free Disk Space
+      - name: Maximize Disk Space
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
+          df -h
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo apt-get clean
           df -h
 
       - name: Checkout code
@@ -157,12 +162,17 @@ jobs:
     needs: code-quality
     
     steps:
-      - name: Free Disk Space
+      - name: Maximize Disk Space
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
+          echo "=== Before cleanup ==="
+          df -h
+          sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' azure-cli google-cloud-sdk
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo rm -rf /usr/local/share/boost /usr/share/swift
           sudo docker system prune -af --volumes
+          echo "=== After cleanup ==="
           df -h
 
       - name: Checkout code
