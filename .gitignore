@@ -29,14 +29,23 @@ ENV/
 # Poetry
 poetry.lock
 
-# Environment Variables
+# Environment Variables (NEVER COMMIT THESE)
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+.env.test
 
-# Streamlit Secrets (contains sensitive data)
+# Streamlit Secrets (contains sensitive data - NEVER COMMIT)
 .streamlit/secrets.toml
 app/frontend/.streamlit/secrets.toml
+**/*secrets.toml
+
+# Verification/Debug Reports (may contain sensitive data)
+*VERIFICATION_REPORT*.md
+*DEBUG_REPORT*.md
+*_CREDENTIALS*.md
 
 # IDEs
 .vscode/
