@@ -10,8 +10,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_BACKEND: ${{ github.repository }}-backend
-  IMAGE_NAME_FRONTEND: ${{ github.repository }}-frontend
+  IMAGE_NAME_BACKEND: ${{ github.repository_owner }}/musicmood-backend
+  IMAGE_NAME_FRONTEND: ${{ github.repository_owner }}/musicmood-frontend
 
 jobs:
   # Job 1: Build and Push Docker Images
