@@ -113,8 +113,10 @@ async def global_exception_handler(request, exc):
 
 # Include API routers
 from app.api import health_router
+from app.api.routes.playlists import router as playlists_router
 
 app.include_router(health_router)
+app.include_router(playlists_router)
 
 
 # Root endpoint

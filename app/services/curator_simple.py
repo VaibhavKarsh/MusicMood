@@ -58,21 +58,56 @@ def curate_playlist_simple(
         )
         
         if not has_audio_features:
-            logger.warning("[CURATOR] Audio features missing - Premium feature required for advanced curation")
+            logger.warning("[CURATOR] Audio features missing - using basic curation (popularity + shuffling)")
+            
+            # FALLBACK: Simple curation without audio features
+            # Use track popularity and simple randomization
+            import random
+            
+            # Sort by popularity first, then shuffle top tracks
+            sorted_tracks = sorted(
+                candidate_tracks, 
+                key=lambda x: x.get('popularity', 0), 
+                reverse=True
+            )
+            
+            # Take more tracks than needed for diversity
+            pool_size = min(len(sorted_tracks), desired_count * 2)
+            track_pool = sorted_tracks[:pool_size]
+            
+            # Shuffle the pool to add variety
+            random.shuffle(track_pool)
+            
+            # Select final tracks
+            final_playlist = track_pool[:desired_count]
+            
+            # Generate simple explanation
+            mood_name = mood_data.get('primary_mood', 'your mood').title()
+            energy = mood_data.get('energy_level', 5)
+            track_count = len(final_playlist)
+            
+            explanation = (
+                f"I've curated {track_count} popular tracks for your {mood_name} mood "
+                f"(energy level: {energy}/10). This playlist features a mix of well-loved songs "
+                f"that match your vibe. Premium features would enable advanced mood-based "
+                f"audio analysis for even better personalization."
+            )
+            
+            logger.info(f"Basic curation complete: {track_count} tracks selected from {len(candidate_tracks)} candidates")
+            
+            execution_time = time.time() - start_time
+            
             return {
-                "success": False,
-                "premium_feature_required": True,
-                "error": "Audio features unavailable",
-                "message": (
-                    "Advanced playlist curation requires Spotify Premium API access for audio analysis. "
-                    "Features like tempo matching, energy level optimization, and mood-based ranking "
-                    "need audio features data (tempo, energy, valence, danceability). "
-                    "Upgrade to Premium to unlock AI-powered playlist curation."
-                ),
-                "playlist": [],
-                "explanation": "Premium feature required for advanced playlist curation.",
-                "diversity_metrics": {},
-                "execution_time": round(time.time() - start_time, 2)
+                "playlist": final_playlist,
+                "explanation": explanation,
+                "diversity_metrics": {
+                    "track_count": track_count,
+                    "curation_method": "basic_popularity"
+                },
+                "track_count": track_count,
+                "execution_time": round(execution_time, 2),
+                "steps_completed": ["basic_curation"],
+                "premium_feature_used": False
             }
         
         logger.info(f"Curating playlist from {len(candidate_tracks)} candidates for mood: {mood_data.get('primary_mood')}")

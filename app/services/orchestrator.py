@@ -208,31 +208,11 @@ def generate_playlist_with_agents(
                 desired_count=min(desired_count, len(candidate_tracks))
             )
             
-            # Check if premium feature is required
-            if curation_result.get('premium_feature_required'):
-                logger.warning(f"[AGENT 3] Premium feature required for advanced curation")
-                result['success'] = False
-                result['premium_feature_required'] = True
-                result['premium_feature_message'] = curation_result.get('message', '')
-                result['error'] = curation_result.get('error', 'Premium feature required')
-                
-                # Still return basic results but flag as premium-only
-                agent3_time = time.time() - agent3_start
-                result['execution_times']['agent3_playlist_curator'] = round(agent3_time, 2)
-                
-                total_time = time.time() - pipeline_start_time
-                result['total_execution_time'] = round(total_time, 2)
-                
-                logger.info("\n" + "=" * 80)
-                logger.info("PIPELINE STOPPED - PREMIUM FEATURE REQUIRED")
-                logger.info(f"Total time: {total_time:.2f}s")
-                logger.info("=" * 80)
-                
-                return result
-            
+            # Check for curation errors
             if curation_result.get('error'):
                 logger.error(f"Agent 3 error: {curation_result['error']}")
                 result['error'] = f"Playlist curation failed: {curation_result['error']}"
+                return result
                 return result
             
             agent3_time = time.time() - agent3_start
