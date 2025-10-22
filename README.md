@@ -5,7 +5,12 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
 [![LangChain](https://img.shields.io/badge/LangChain-0.3+-orange.svg)](https://python.langchain.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+![CI](https://github.com/OWNER/musicmood/workflows/CI%20-%20Build%20and%20Test/badge.svg)
+![Docker](https://github.com/OWNER/musicmood/workflows/CD%20-%20Docker%20Build%20%26%20Push/badge.svg)
+![CodeQL](https://github.com/OWNER/musicmood/workflows/CodeQL%20Analysis/badge.svg)
 
 ## 🎯 Project Overview
 

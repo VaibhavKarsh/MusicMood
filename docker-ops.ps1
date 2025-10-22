@@ -5,7 +5,8 @@ param(
     [Parameter(Position=0)]
     [ValidateSet('build', 'up', 'down', 'restart', 'logs', 'logs-backend', 'logs-frontend', 
                  'clean', 'rebuild', 'shell-backend', 'shell-frontend', 'shell-db', 
-                 'migrate', 'ps', 'health', 'backup-db', 'help')]
+                 'migrate', 'ps', 'health', 'backup-db', 'pull-models', 'list-models', 
+                 'shell-ollama', 'logs-ollama', 'help')]
     [string]$Command = 'help'
 )
 
@@ -19,15 +20,19 @@ function Show-Help {
     Write-Host ".\docker-ops.ps1 logs          - View logs (all services)"
     Write-Host ".\docker-ops.ps1 logs-backend  - View backend logs"
     Write-Host ".\docker-ops.ps1 logs-frontend - View frontend logs"
+    Write-Host ".\docker-ops.ps1 logs-ollama   - View Ollama logs"
     Write-Host ".\docker-ops.ps1 clean         - Stop and remove all containers, volumes"
     Write-Host ".\docker-ops.ps1 rebuild       - Clean build and start"
     Write-Host ".\docker-ops.ps1 shell-backend - Access backend container shell"
     Write-Host ".\docker-ops.ps1 shell-frontend- Access frontend container shell"
     Write-Host ".\docker-ops.ps1 shell-db      - Access PostgreSQL shell"
+    Write-Host ".\docker-ops.ps1 shell-ollama  - Access Ollama container shell"
     Write-Host ".\docker-ops.ps1 migrate       - Run database migrations"
     Write-Host ".\docker-ops.ps1 ps            - Show running containers"
     Write-Host ".\docker-ops.ps1 health        - Check service health"
     Write-Host ".\docker-ops.ps1 backup-db     - Backup database"
+    Write-Host ".\docker-ops.ps1 pull-models   - Pull Ollama models"
+    Write-Host ".\docker-ops.ps1 list-models   - List available Ollama models"
     Write-Host "`n"
 }
 
@@ -79,6 +84,38 @@ function Show-BackendLogs {
 function Show-FrontendLogs {
     Write-Host "📋 Showing frontend logs (Ctrl+C to exit)..." -ForegroundColor Yellow
     docker-compose logs -f frontend
+}
+
+function Show-OllamaLogs {
+    Write-Host "📋 Showing Ollama logs (Ctrl+C to exit)..." -ForegroundColor Yellow
+    docker-compose logs -f ollama
+}
+
+function Pull-OllamaModels {
+    Write-Host "🤖 Pulling Ollama models..." -ForegroundColor Yellow
+    Write-Host "This may take several minutes depending on your internet connection." -ForegroundColor Yellow
+    
+    Write-Host "`n📥 Pulling gemma3:4b (~3.3GB)..." -ForegroundColor Cyan
+    docker-compose exec ollama ollama pull gemma3:4b
+    
+    Write-Host "`n📥 Pulling qwen3:4b (~2.5GB)..." -ForegroundColor Cyan
+    docker-compose exec ollama ollama pull qwen3:4b
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "`n✅ All models pulled successfully!" -ForegroundColor Green
+        Write-Host "`n📋 Available models:" -ForegroundColor Cyan
+        docker-compose exec ollama ollama list
+    }
+}
+
+function List-OllamaModels {
+    Write-Host "📋 Available Ollama models:" -ForegroundColor Yellow
+    docker-compose exec ollama ollama list
+}
+
+function Shell-Ollama {
+    Write-Host "🐚 Accessing Ollama container shell..." -ForegroundColor Yellow
+    docker-compose exec ollama bash
 }
 
 function Clean-All {
@@ -155,6 +192,19 @@ function Check-Health {
     
     Write-Host "`n🔍 Redis Health:" -ForegroundColor Cyan
     docker-compose exec redis redis-cli ping
+    
+    Write-Host "`n🔍 Ollama Health:" -ForegroundColor Cyan
+    try {
+        $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 5
+        if ($response.models) {
+            Write-Host "✅ Ollama: OK - $($response.models.Count) model(s) available" -ForegroundColor Green
+        } else {
+            Write-Host "⚠️  Ollama: Running but no models installed" -ForegroundColor Yellow
+            Write-Host "   Run '.\docker-ops.ps1 pull-models' to download models" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "❌ Ollama: Not responding" -ForegroundColor Red
+    }
 }
 
 function Backup-Database {
@@ -176,15 +226,19 @@ switch ($Command) {
     'logs'          { Show-Logs }
     'logs-backend'  { Show-BackendLogs }
     'logs-frontend' { Show-FrontendLogs }
+    'logs-ollama'   { Show-OllamaLogs }
     'clean'         { Clean-All }
     'rebuild'       { Rebuild-All }
     'shell-backend' { Shell-Backend }
     'shell-frontend'{ Shell-Frontend }
     'shell-db'      { Shell-Database }
+    'shell-ollama'  { Shell-Ollama }
     'migrate'       { Run-Migrations }
     'ps'            { Show-Status }
     'health'        { Check-Health }
     'backup-db'     { Backup-Database }
+    'pull-models'   { Pull-OllamaModels }
+    'list-models'   { List-OllamaModels }
     'help'          { Show-Help }
     default         { Show-Help }
 }
