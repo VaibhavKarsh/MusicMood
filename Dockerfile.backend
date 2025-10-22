@@ -1,0 +1,71 @@
+# Multi-stage build for backend
+FROM python:3.11-slim as builder
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install --no-cache-dir poetry==1.8.3
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock ./
+
+# Configure Poetry to not create virtual environment
+RUN poetry config virtualenvs.create false
+
+# Install dependencies
+RUN poetry install --no-root --no-dev --no-interaction --no-ansi
+
+# Final stage
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY app/ ./app/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+COPY scripts/start-backend.sh ./scripts/
+
+# Install redis-tools for health check
+RUN apt-get update && apt-get install -y redis-tools && \
+    rm -rf /var/lib/apt/lists/*
+
+# Make startup script executable
+RUN chmod +x ./scripts/start-backend.sh
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8001/health || exit 1
+
+# Run the application with startup script
+CMD ["./scripts/start-backend.sh"]

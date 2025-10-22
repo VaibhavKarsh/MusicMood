@@ -3,6 +3,7 @@ MusicMood - Complete Professional UI Overhaul
 """
 import streamlit as st
 import requests
+import os
 from datetime import datetime
 from collections import Counter
 
@@ -343,8 +344,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# API Config
-API_BASE = "http://localhost:8001"
+# API Config - support both Docker and local development
+API_BASE = os.getenv("API_BASE_URL", "http://localhost:8001")
 
 # Session state
 if 'user_id' not in st.session_state:

@@ -22,9 +22,16 @@ class Settings(BaseSettings):
     DATABASE_POOL_TIMEOUT: int = 30
     
     # Redis Settings
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
     REDIS_MAX_CONNECTIONS: int = 10
     REDIS_DECODE_RESPONSES: bool = True
+    
+    @property
+    def REDIS_URL(self) -> str:
+        """Construct Redis URL from components"""
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
     
     # Ollama Settings
     OLLAMA_BASE_URL: str = "http://localhost:11434"
