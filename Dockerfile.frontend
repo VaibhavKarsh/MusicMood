@@ -40,7 +40,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy frontend application
 COPY app/frontend/ ./app/frontend/
-COPY .streamlit/ ./.streamlit/
+
+# Copy only config.toml, NOT secrets.toml (secrets should come from env vars in Docker)
+COPY .streamlit/config.toml ./.streamlit/config.toml
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && \

@@ -345,6 +345,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # API Config - support both Docker and local development
+# Read from environment variable (set in docker-compose.yml or locally)
 API_BASE = os.getenv("API_BASE_URL", "http://localhost:8001")
 
 # Session state

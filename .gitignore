@@ -34,6 +34,10 @@ poetry.lock
 .env.local
 .env.*.local
 
+# Streamlit Secrets (contains sensitive data)
+.streamlit/secrets.toml
+app/frontend/.streamlit/secrets.toml
+
 # IDEs
 .vscode/
 .idea/
