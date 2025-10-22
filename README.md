@@ -8,9 +8,6 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![CI](https://github.com/YOUR_USERNAME/musicmood/workflows/CI%20-%20Build%20and%20Test/badge.svg)
-![Docker](https://github.com/YOUR_USERNAME/musicmood/workflows/CD%20-%20Docker%20Build%20%26%20Push/badge.svg)
-
 ## 🎯 Project Overview
 
 MusicMood is an intelligent music recommendation system that uses a **multi-agent AI architecture** to understand user moods and generate personalized Spotify playlists. The system employs three specialized AI agents working sequentially to analyze mood, discover music, and curate the perfect playlist.
@@ -24,7 +21,7 @@ MusicMood is an intelligent music recommendation system that uses a **multi-agen
 - **💾 Smart Caching**: Redis-based caching for instant repeat queries
 - **📊 Mood History**: Track your mood journey and music preferences over time
 - **🐳 Fully Dockerized**: One command to run everything - no complex setup
-- **⚡ Production-Ready**: Complete CI/CD pipeline with GitHub Actions
+- **⚡ Production-Ready**: Complete with health checks and error handling
 
 ## 🏗️ Architecture
 
