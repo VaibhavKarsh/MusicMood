@@ -137,9 +137,7 @@ After successful startup:
 
 ## 🎓 Next Steps
 
-- 📖 Read the [SETUP_GUIDE.md](SETUP_GUIDE.md) for architecture details
 - 🐳 Check [DOCKER_GUIDE.md](DOCKER_GUIDE.md) for Docker tips
-- 🔧 Explore [CI_CD_GUIDE.md](CI_CD_GUIDE.md) for deployment
 - 💻 Browse the API docs at http://localhost:8001/docs
 
 ## 🆘 Need Help?
