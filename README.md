@@ -301,22 +301,6 @@ poetry run python test_imports.py
 - [ ] Cloud deployment (Render.com + Streamlit Cloud)
 - [x] Comprehensive documentation
 
-## 📸 Screenshots & Demo
-
-<details>
-<summary>Click to see screenshots</summary>
-
-### Main Interface
-![Main UI](docs/screenshots/main-ui.png)
-
-### Playlist Generation
-![Generation](docs/screenshots/generation.png)
-
-### Mood History
-![History](docs/screenshots/history.png)
-
-</details>
-
 ## 🎥 Demo Video
 
 > Coming soon! Will include:
@@ -350,9 +334,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Portfolio Project** showcasing production-grade AI engineering
 
-- **GitHub**: [github.com/YOUR_USERNAME](https://github.com/YOUR_USERNAME)
-- **LinkedIn**: [linkedin.com/in/YOUR_PROFILE](https://linkedin.com/in/YOUR_PROFILE)
-- **Portfolio**: [your-portfolio-site.com](https://your-portfolio-site.com)
+- **GitHub**: [github.com/Vaibhav Karsh](https://github.com/VaibhavKarsh)
+- **LinkedIn**: [linkedin.com/in/Vaibhav Karsh](https://linkedin.com/in/](https://www.linkedin.com/in/vaibhav-karsh-527479258/))
 
 ---
 
