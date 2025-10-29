@@ -334,8 +334,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Portfolio Project** showcasing production-grade AI engineering
 
-- **GitHub**: [github.com/Vaibhav Karsh](https://github.com/VaibhavKarsh)
-- **LinkedIn**: [linkedin.com/in/Vaibhav Karsh](https://linkedin.com/in/](https://www.linkedin.com/in/vaibhav-karsh-527479258/)
+- **GitHub**: (https://github.com/VaibhavKarsh)
+- **LinkedIn**: (https://www.linkedin.com/in/vaibhav-karsh-527479258/)
 
 ---
 
