@@ -254,94 +254,14 @@ poetry run pytest tests/test_agents.py
 poetry run python test_imports.py
 ```
 
-## 📊 Performance
-
-| Metric | Performance |
-|--------|-------------|
-| **End-to-End Pipeline** | ~30 seconds (first run with local AI) |
-| **Cache Hit Response** | <1 second |
-| **Docker Startup** | ~30 seconds (all 5 containers healthy) |
-| **AI Model Size** | 3.3GB (gemma3:4b) |
-| **Memory Usage** | ~4GB total (all containers) |
-| **Database Tables** | 4 (users, moods, playlists, tracks) |
-
-## 🔧 Development Workflow
-
-### Phase 1: Environment Setup ✅
-- [x] Poetry environment created
-- [x] All dependencies installed
-- [x] Project structure created
-- [x] Configuration files set up
-- [ ] Ollama configured
-- [ ] PostgreSQL configured
-- [ ] Redis configured
-- [ ] API credentials obtained
-
-### Phase 2: Backend Architecture (In Progress)
-- [ ] FastAPI application initialized
-- [ ] Database models created
-- [ ] Database migrations set up
-- [ ] Health check endpoint
-
-### Phase 3-5: Agent Implementation
-- [ ] Agent 1: Mood Understanding
-- [ ] Agent 2: Music Discovery
-- [ ] Agent 3: Playlist Curator
-- [ ] Multi-agent orchestration
-
-### Phase 6-7: Frontend & Containerization
-- [x] Streamlit UI
-- [x] Docker setup
-- [x] Local testing
-
-### Phase 8-10: Deployment & Production
-- [x] CI/CD pipeline (GitHub Actions)
-- [x] Docker containerization with Ollama
-- [x] Production-ready configurations
-- [ ] Cloud deployment (Render.com + Streamlit Cloud)
-- [x] Comprehensive documentation
-
-## 🎥 Demo Video
-
-> Coming soon! Will include:
-> - Quick setup demonstration
-> - Playlist generation walkthrough
-> - Architecture explanation
-> - Performance benchmarks
 
 ## 🤝 Contributing
 
-This is a portfolio project. For suggestions or issues:
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+For any suggestions and improvements feel free to contribute.
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **LangChain** for the agent framework
-- **Ollama** for local LLM capabilities
-- **Spotify** for comprehensive music API
-- **FastAPI** for the excellent web framework
-
-## 📞 Connect
-
-**Portfolio Project** showcasing production-grade AI engineering
-
-- **GitHub**: (https://github.com/VaibhavKarsh)
-- **LinkedIn**: (https://www.linkedin.com/in/vaibhav-karsh-527479258/)
-
----
-
-<div align="center">
-
-**Built with ❤️ using LangChain, FastAPI, and Ollama**
 
 ⭐ Star this repo if you found it helpful!
 
